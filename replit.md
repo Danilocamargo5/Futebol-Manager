@@ -43,6 +43,7 @@ Aplicativo Flutter para organizar futebol amador, com cadastro de times e jogado
 ## User preferences
 
 - O usuário prefere Flutter e não domina Expo/React Native.
+- Se Flutter não puder ser executado no ambiente, prefere uma alternativa que possa ser visualizada e usada diretamente no Replit.
 
 ## Gotchas
 

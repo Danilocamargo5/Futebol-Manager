@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Pelada Pro"
+description = "Um app responsivo para organizar futebol amador, cadastrar times e jogadores, avaliar níveis por posição, sortear equipes equilibradas, registrar partidas e acompanhar rankings de artilheiros e goleiros."
+version = "1.0.0"
+id = "artifacts/pelada-pro"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19698
+
+[services.development]
+run = "pnpm --filter @workspace/pelada-pro run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/pelada-pro", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/pelada-pro/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19698"
+BASE_PATH = "/"
