@@ -1,6 +1,6 @@
-# [Project name]
+# Pelada Pro
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Aplicativo Flutter para organizar futebol amador, com cadastro de times e jogadores, avaliações por posição, sorteio equilibrado, registro de partidas e rankings.
 
 ## Run & Operate
 
@@ -22,23 +22,32 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `flutter_app/` — projeto Flutter multiplataforma com o código do aplicativo.
+- `flutter_app/lib/models.dart` — entidades de times, jogadores e partidas.
+- `flutter_app/lib/app_state.dart` — estado e persistência local.
+- `flutter_app/lib/main.dart` — telas, navegação e fluxos principais.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- A primeira versão usa persistência local com `shared_preferences`, sem exigir servidor ou cadastro de conta.
+- O sorteio usa a média das avaliações e distribuição alternada para equilibrar as duas equipes.
+- O projeto é Flutter puro para permitir publicação no Android e iOS a partir da mesma base.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Cadastro e manutenção de times e jogadores.
+- Avaliação de nível de 0 a 3 estrelas para goleiro, defesa, meio e ataque.
+- Marcação de presença, sorteio de times e registro de placar/gols.
+- Rankings de artilheiros e melhores goleiros por semana, mês e ano.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- O usuário prefere Flutter e não domina Expo/React Native.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- O diretório Flutter precisa ser aberto com Flutter instalado; este ambiente não possui o SDK Flutter para validar ou executar o app.
+- Execute `flutter pub get` antes de rodar o aplicativo.
 
 ## Pointers
 
