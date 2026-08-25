@@ -8,9 +8,10 @@ import {
 
 type Position = 'Goleiro' | 'Defesa' | 'Meio' | 'Ataque';
 type Ratings = { goleiro: number; defesa: number; meio: number; ataque: number };
-type Player = { id: string; name: string; nickname: string; position: Position; ratings: Ratings; present: boolean; };
+type Player = { id: string; name: string; nickname: string; position: Position; ratings: Ratings; present: boolean; active: boolean; };
 type Team = { id: string; rodadaId: string; name: string; color: string; playerIds: string[] };
 type Match = { id: string; date: string; teamA: string; teamB: string; scoreA: number; scoreB: number; goalsA: string[]; goalsB: string[]; assistsA: string[]; assistsB: string[]; bestKeeper: string; };
+type PlayerEvent = { id: string; playerId: string; type: 'gol' | 'assistencia' | 'defesa_dificil'; date: string; };
 type RepeatType = 'never' | 'weekly' | 'biweekly' | 'monthly';
 type Rodada = { id: string; date: string; time: string; location: string; description?: string; repeatType?: RepeatType; repeatUntil?: string; createdAt: string; };
 
@@ -143,8 +144,9 @@ function PlayerForm({ player, teams, onSave, onClose }: { player?: Player; teams
   const [name, setName] = useState(player?.name ?? '');
   const [nickname, setNickname] = useState(player?.nickname ?? '');
   const [position, setPosition] = useState<Position>(player?.position ?? 'Meio');
+  const [active, setActive] = useState(player?.active ?? true);
   const [ratings, setRatings] = useState<Ratings>(player?.ratings ?? { goleiro: 0, defesa: 1, meio: 1, ataque: 1 });
-  return <Modal title={player ? 'Editar jogador' : 'Novo jogador'} onClose={onClose}><form onSubmit={(event) => { event.preventDefault(); if (!name.trim()) return; onSave({ id: player?.id ?? id(), name: name.trim(), nickname: nickname.trim() || name.trim().split(' ')[0], position, ratings, present: player?.present ?? false }); onClose(); }} className="space-y-5"><div className="grid gap-4 sm:grid-cols-2"><label className="sm:col-span-2"><span className="field-label">Nome completo</span><input autoFocus required data-testid="input-player-name" value={name} onChange={(e) => setName(e.target.value)} className="field-input" placeholder="Ex.: Rafael Santos" /></label><label><span className="field-label">Como é chamado?</span><input data-testid="input-player-nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} className="field-input" placeholder="Ex.: Rafa" /></label><label className="sm:col-span-2"><span className="field-label">Posição principal</span><select data-testid="select-player-position" value={position} onChange={(e) => setPosition(e.target.value as Position)} className="field-input">{positions.map((item) => <option key={item}>{item}</option>)}</select></label></div><div className="rounded-xl bg-muted/60 p-4"><p className="mb-3 text-xs font-black uppercase tracking-[.14em]">Avaliação técnica</p><div className="grid grid-cols-2 gap-4">{ratingKeys.map((key) => <div key={key} className="flex items-center justify-between"><span className="text-sm font-semibold">{key[0].toUpperCase() + key.slice(1)}</span><Stars label={key} value={ratings[key]} onChange={(value) => setRatings((old) => ({ ...old, [key]: value }))} /></div>)}</div><p className="mt-3 text-[11px] text-muted-foreground">Toque nas estrelas para ajustar de 0 a 3. Será incluído no sorteio normalmente.</p></div><div className="flex justify-end gap-2 border-t pt-5"><Button variant="outline" onClick={onClose}>Cancelar</Button><Button type="submit" icon={Check} testId="button-save-player">Salvar jogador</Button></div></form></Modal>;
+  return <Modal title={player ? 'Editar jogador' : 'Novo jogador'} onClose={onClose}><form onSubmit={(event) => { event.preventDefault(); if (!name.trim()) return; onSave({ id: player?.id ?? id(), name: name.trim(), nickname: nickname.trim() || name.trim().split(' ')[0], position, ratings, present: player?.present ?? false, active }); onClose(); }} className="space-y-5"><div className="grid gap-4 sm:grid-cols-2"><label className="sm:col-span-2"><span className="field-label">Nome completo</span><input autoFocus required data-testid="input-player-name" value={name} onChange={(e) => setName(e.target.value)} className="field-input" placeholder="Ex.: Rafael Santos" /></label><label><span className="field-label">Como é chamado?</span><input data-testid="input-player-nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} className="field-input" placeholder="Ex.: Rafa" /></label><label className="sm:col-span-2"><span className="field-label">Posição principal</span><select data-testid="select-player-position" value={position} onChange={(e) => setPosition(e.target.value as Position)} className="field-input">{positions.map((item) => <option key={item}>{item}</option>)}</select></label><label className="sm:col-span-2"><span className="field-label">Status</span><div className="flex items-center gap-2"><input type="checkbox" id="active" checked={active} onChange={(e) => setActive(e.target.checked)} className="rounded" /><label htmlFor="active" className="text-sm font-semibold">{active ? '✅ Ativo' : '❌ Inativo'}</label></div></label></div><div className="rounded-xl bg-muted/60 p-4"><p className="mb-3 text-xs font-black uppercase tracking-[.14em]">Avaliação técnica</p><div className="grid grid-cols-2 gap-4">{ratingKeys.map((key) => <div key={key} className="flex items-center justify-between"><span className="text-sm font-semibold">{key[0].toUpperCase() + key.slice(1)}</span><Stars label={key} value={ratings[key]} onChange={(value) => setRatings((old) => ({ ...old, [key]: value }))} /></div>)}</div><p className="mt-3 text-[11px] text-muted-foreground">Toque nas estrelas para ajustar de 0 a 3. Será incluído no sorteio normalmente.</p></div><div className="flex justify-end gap-2 border-t pt-5"><Button variant="outline" onClick={onClose}>Cancelar</Button><Button type="submit" icon={Check} testId="button-save-player">Salvar jogador</Button></div></form></Modal>;
 }
 
 function PlayersPage({ players, setPlayers, teams }: { players: Player[]; setPlayers: (value: Player[] | ((old: Player[]) => Player[])) => void; teams: Team[] }) {
@@ -232,105 +234,155 @@ function GoalInputs({ title, goals, players, onChange }: { title: string; goals:
   return <div><p className="field-label">{title} <span className="font-normal text-muted-foreground">({goals.length})</span></p>{goals.length ? <div className="space-y-2">{goals.map((goal, index) => <select data-testid={`select-goal-${title}-${index}`} key={`${title}-${index}`} value={goal} onChange={(e) => onChange(index, e.target.value)} className="field-input"><option value="">Autor do gol</option>{players.map((player) => <option key={player.id} value={player.id}>{player.nickname}</option>)}</select>)}</div> : <div className="rounded-xl border border-dashed p-3 text-center text-xs text-muted-foreground">Informe o placar para adicionar autores.</div>}</div>;
 }
 
-function LiveScoringPage({ teams, players, matches, setMatches, activeRodadaId }: { teams: Team[]; players: Player[]; matches: Match[]; setMatches: (value: Match[] | ((old: Match[]) => Match[])) => void; activeRodadaId: string }) {
-  const [scoreA, setScoreA] = useState(0);
-  const [scoreB, setScoreB] = useState(0);
-  const [goalsA, setGoalsA] = useState<string[]>([]);
-  const [goalsB, setGoalsB] = useState<string[]>([]);
-  const [assistsA, setAssistsA] = useState<string[]>([]);
-  const [assistsB, setAssistsB] = useState<string[]>([]);
-  const [bestKeeper, setBestKeeper] = useState<string | null>(null);
+function LiveScoringPage({ players, playerEvents, setPlayerEvents }: { players: Player[]; playerEvents: PlayerEvent[]; setPlayerEvents: (value: PlayerEvent[] | ((old: PlayerEvent[]) => PlayerEvent[])) => void }) {
+  const [selectedPlayer, setSelectedPlayer] = useState<string>('');
+  const [eventType, setEventType] = useState<'gol' | 'assistencia' | 'defesa_dificil'>('gol');
   
-  const teamA = teams[0];
-  const teamB = teams[1];
+  const activePlayers = players.filter(p => p.active);
   
-  if (!teamA || !teamB) {
-    return <div className="animate-rise"><PageHeading eyebrow="registro em tempo real" title="Live Scoring" description="Registre os gols, assistências e melhor goleiro da partida." /><EmptyState icon={ClipboardList} title="Sem times selecionados" text="Vá para Sorteio e monte os times primeiro." action={<Button onClick={() => {}} href="/sorteio">Ir para Sorteio</Button>} /></div>;
-  }
-  
-  const teamAPlayers = players.filter(p => teamA.playerIds.includes(p.id));
-  const teamBPlayers = players.filter(p => teamB.playerIds.includes(p.id));
-  
-  const handleAddGoal = (teamSide: 'A' | 'B', playerId: string) => {
-    if (teamSide === 'A') {
-      setGoalsA([...goalsA, playerId]);
-      setScoreA(scoreA + 1);
-    } else {
-      setGoalsB([...goalsB, playerId]);
-      setScoreB(scoreB + 1);
-    }
-  };
-  
-  const handleAddAssist = (teamSide: 'A' | 'B', playerId: string) => {
-    if (teamSide === 'A') {
-      setAssistsA([...assistsA, playerId]);
-    } else {
-      setAssistsB([...assistsB, playerId]);
-    }
-  };
-  
-  const handleSaveMatch = () => {
-    if (!bestKeeper) {
-      alert('Selecione o melhor goleiro');
+  const handleAddEvent = () => {
+    if (!selectedPlayer) {
+      alert('Selecione um jogador');
       return;
     }
     
-    const match: Match = {
+    const event: PlayerEvent = {
       id: id(),
+      playerId: selectedPlayer,
+      type: eventType,
       date: new Date().toISOString().split('T')[0],
-      teamA: teamA.name,
-      teamB: teamB.name,
-      scoreA,
-      scoreB,
-      goalsA,
-      goalsB,
-      assistsA,
-      assistsB,
-      bestKeeper,
     };
     
-    setMatches(old => [match, ...old]);
-    alert('Partida registrada com sucesso!');
-    setScoreA(0);
-    setScoreB(0);
-    setGoalsA([]);
-    setGoalsB([]);
-    setAssistsA([]);
-    setAssistsB([]);
-    setBestKeeper(null);
+    setPlayerEvents(old => [event, ...old]);
+    setSelectedPlayer('');
+    setEventType('gol');
   };
   
+  const handleDeleteEvent = (eventId: string) => {
+    setPlayerEvents(old => old.filter(e => e.id !== eventId));
+  };
+  
+  const eventCounts = new Map<string, { gol: number; assistencia: number; defesa_dificil: number }>();
+  activePlayers.forEach(p => {
+    eventCounts.set(p.id, { gol: 0, assistencia: 0, defesa_dificil: 0 });
+  });
+  
+  playerEvents.forEach(e => {
+    const counts = eventCounts.get(e.playerId);
+    if (counts) {
+      counts[e.type]++;
+    }
+  });
+  
   return <div className="animate-rise">
-    <PageHeading eyebrow={`${teamA.name} vs ${teamB.name}`} title="Live Scoring" description="Registre gols, assistências e o melhor goleiro em tempo real." action={<Button icon={Check} onClick={handleSaveMatch} testId="button-save-match">Salvar Partida</Button>} />
+    <PageHeading eyebrow="registro de eventos" title="Live Scoring" description="Cadastre gols, assistências e defesas difíceis dos jogadores." />
     
     <div className="mb-6 rounded-2xl border bg-card p-6">
-      <div className="mb-8 flex items-center justify-between text-center">
-        <div className="flex-1"><h3 className="font-display text-3xl font-black uppercase">{teamA.name}</h3><p className="mt-2 text-muted-foreground">{teamA.playerIds.length} jogadores</p></div>
-        <div className="mx-6 font-display text-6xl font-black">{scoreA} <span className="text-2xl text-muted-foreground">×</span> {scoreB}</div>
-        <div className="flex-1"><h3 className="font-display text-3xl font-black uppercase">{teamB.name}</h3><p className="mt-2 text-muted-foreground">{teamB.playerIds.length} jogadores</p></div>
-      </div>
-      
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border bg-muted/20 p-4">
-          <p className="mb-3 text-xs font-bold uppercase">Clique para registrar gol</p>
-          <div className="space-y-2">{teamAPlayers.map(player => <button key={player.id} onClick={() => handleAddGoal('A', player.id)} className="w-full rounded-lg bg-[#f8d0c8]/50 p-3 text-left text-xs font-bold hover:bg-[#f8d0c8] transition"><span>{player.nickname || player.name}</span>{goalsA.includes(player.id) && <span className="float-right text-[#f97316]">⚽ {goalsA.filter(g => g === player.id).length}</span>}</button>)}</div>
+      <p className="mb-4 text-xs font-bold uppercase tracking-[.18em]">Cadastro de Eventos</p>
+      <div className="space-y-4">
+        <div>
+          <label className="field-label">Jogador</label>
+          <select value={selectedPlayer} onChange={(e) => setSelectedPlayer(e.target.value)} className="field-input">
+            <option value="">Selecione um jogador...</option>
+            {activePlayers.map(p => <option key={p.id} value={p.id}>{p.nickname || p.name}</option>)}
+          </select>
         </div>
         
-        <div className="rounded-lg border bg-muted/20 p-4">
-          <p className="mb-3 text-xs font-bold uppercase">Clique para registrar gol</p>
-          <div className="space-y-2">{teamBPlayers.map(player => <button key={player.id} onClick={() => handleAddGoal('B', player.id)} className="w-full rounded-lg bg-[#d9f3a1]/50 p-3 text-left text-xs font-bold hover:bg-[#d9f3a1] transition"><span>{player.nickname || player.name}</span>{goalsB.includes(player.id) && <span className="float-right text-[#f97316]">⚽ {goalsB.filter(g => g === player.id).length}</span>}</button>)}</div>
+        <div>
+          <label className="field-label">Tipo de Evento</label>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {[
+              { value: 'gol', label: '⚽ Gol', color: 'bg-[#f8d0c8]' },
+              { value: 'assistencia', label: '🎯 Assistência', color: 'bg-[#f9d995]' },
+              { value: 'defesa_dificil', label: '🛡️ Defesa Difícil', color: 'bg-[#d9f3a1]' },
+            ].map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setEventType(opt.value as any)}
+                className={`rounded-lg p-3 text-xs font-bold transition ${eventType === opt.value ? `${opt.color} border-2 border-[#f97316]` : `${opt.color}/30 hover:${opt.color}/50`}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
+        
+        <button onClick={handleAddEvent} className="w-full rounded-xl bg-primary text-primary-foreground px-4 py-2.5 font-bold hover:brightness-110">
+          Registrar Evento
+        </button>
       </div>
     </div>
     
-    <div className="mb-6 rounded-2xl border bg-card p-6">
-      <p className="mb-4 text-xs font-bold uppercase tracking-[.18em]">Melhor Goleiro</p>
-      <div className="grid gap-3 sm:grid-cols-2">{[...teamAPlayers, ...teamBPlayers].map(player => <button key={player.id} onClick={() => setBestKeeper(player.id)} className={`rounded-lg border-2 p-3 text-left text-xs font-bold transition ${bestKeeper === player.id ? 'border-[#f97316] bg-[#f97316]/10' : 'border-muted hover:border-[#f97316]/50'}`}>{player.nickname || player.name} {bestKeeper === player.id && <span className="float-right">🏆</span>}</button>)}</div>
+    <div className="rounded-2xl border bg-card p-6">
+      <p className="mb-4 text-xs font-bold uppercase tracking-[.18em]">Eventos Registrados</p>
+      {playerEvents.length > 0 ? (
+        <div className="space-y-2">
+          {playerEvents.map(event => {
+            const player = players.find(p => p.id === event.playerId);
+            const emoji = event.type === 'gol' ? '⚽' : event.type === 'assistencia' ? '🎯' : '🛡️';
+            const label = event.type === 'gol' ? 'Gol' : event.type === 'assistencia' ? 'Assistência' : 'Defesa Difícil';
+            return (
+              <div key={event.id} className="flex items-center justify-between rounded-lg bg-muted/30 p-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">{emoji}</span>
+                  <div>
+                    <p className="text-sm font-bold">{player?.nickname || player?.name}</p>
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                  </div>
+                </div>
+                <button onClick={() => handleDeleteEvent(event.id)} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/20 hover:text-destructive">
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">Nenhum evento registrado ainda</p>
+      )}
+    </div>
+    
+    <div className="mt-6 rounded-2xl border bg-card p-6">
+      <p className="mb-4 text-xs font-bold uppercase tracking-[.18em]">Resumo por Jogador</p>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {activePlayers.map(player => {
+          const counts = eventCounts.get(player.id);
+          const total = (counts?.gol ?? 0) + (counts?.assistencia ?? 0) + (counts?.defesa_dificil ?? 0);
+          return total > 0 ? (
+            <div key={player.id} className="rounded-lg border bg-muted/30 p-4">
+              <p className="font-bold text-sm mb-2">{player.nickname || player.name}</p>
+              <div className="space-y-1 text-xs">
+                {(counts?.gol ?? 0) > 0 && <p>⚽ {counts.gol} gol{counts.gol > 1 ? 's' : ''}</p>}
+                {(counts?.assistencia ?? 0) > 0 && <p>🎯 {counts.assistencia} assistência{counts.assistencia > 1 ? 's' : ''}</p>}
+                {(counts?.defesa_dificil ?? 0) > 0 && <p>🛡️ {counts.defesa_dificil} defesa{counts.defesa_dificil > 1 ? 's' : ''}</p>}
+              </div>
+            </div>
+          ) : null;
+        })}
+      </div>
     </div>
   </div>;
 }
 
-function RankingsPage({ players, matches }: { players: Player[]; matches: Match[] }) {
+function RankingsPage({ players, playerEvents }: { players: Player[]; playerEvents: PlayerEvent[] }) {
+  // Calcular rankings a partir de playerEvents
+  const golCounts = new Map<string, number>();
+  const assistCounts = new Map<string, number>();
+  const defensaCounts = new Map<string, number>();
+  
+  playerEvents.forEach(e => {
+    if (e.type === 'gol') golCounts.set(e.playerId, (golCounts.get(e.playerId) ?? 0) + 1);
+    if (e.type === 'assistencia') assistCounts.set(e.playerId, (assistCounts.get(e.playerId) ?? 0) + 1);
+    if (e.type === 'defesa_dificil') defensaCounts.set(e.playerId, (defensaCounts.get(e.playerId) ?? 0) + 1);
+  });
+  
+  const [period, setPeriod] = useState<'week' | 'month' | 'year'>('month');
+  const scorers = players.map((p) => ({ player: p, count: golCounts.get(p.id) ?? 0 })).sort((a, b) => b.count - a.count);
+  const assists = players.map((p) => ({ player: p, count: assistCounts.get(p.id) ?? 0 })).sort((a, b) => b.count - a.count);
+  const defesas = players.map((p) => ({ player: p, count: defensaCounts.get(p.id) ?? 0 })).sort((a, b) => b.count - a.count);
+  
+  return <div className="animate-rise"><PageHeading eyebrow="números que contam a história" title="Rankings" description="Gols, assistências e defesas difíceis baseado no Live Scoring." action={<div className="flex rounded-xl border bg-card p-1">{(['week', 'month', 'year'] as const).map((item) => <button key={item} data-testid={`button-period-${item}`} onClick={() => setPeriod(item)} className={`rounded-lg px-3 py-2 text-xs font-bold ${period === item ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>{item === 'week' ? 'Semana' : item === 'month' ? 'Mês' : 'Ano'}</button>)}</div>} /><div className="grid gap-6 lg:grid-cols-3"><RankingCard title="Artilheiros" subtitle="Quem mais fez gols" icon={Goal} color="bg-[#f8d0c8] text-[#a34839]" items={scorers} suffix="gols" /><RankingCard title="Assistência para gol" subtitle="Quem mais criou oportunidades" icon={Swords} color="bg-[#f9d995] text-[#835d1b]" items={assists} suffix="assistências" /><RankingCard title="Defesas Difíceis" subtitle="Melhor defesa" icon={Shield} color="bg-[#d9f3a1] text-[#456b31]" items={defesas} suffix="defesas" /></div></div>;
+}
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>('month');
   const since = period === 'week' ? 7 : period === 'month' ? 30 : 365;
   const relevant = matches.filter((match) => Date.now() - new Date(match.date).getTime() <= since * 86400000);
@@ -393,6 +445,7 @@ function AppContent() {
   const [players, setPlayers] = useStored<Player[]>('pelada-pro-players', seedPlayers);
   const [teams, setTeams] = useStored<Team[]>('pelada-pro-teams', []);
   const [matches, setMatches] = useStored<Match[]>('pelada-pro-matches', seedMatches);
+  const [playerEvents, setPlayerEvents] = useStored<PlayerEvent[]>('pelada-pro-player-events', []);
   const [rodadas, setRodadas] = useStored<Rodada[]>('pelada-pro-rodadas', seedRodadas);
   const [activeRodadaId, setActiveRodadaId] = useStored<string>('pelada-pro-active-rodada', seedRodadas[0]?.id ?? '');
   
@@ -411,7 +464,7 @@ function AppContent() {
   const activeRodada = rodadas.find((r) => r.id === activeRodadaId);
   const activeTeams = teams.filter((t) => t.rodadaId === activeRodadaId);
   
-  return <Shell rodadas={rodadas}><Switch><Route path="/" component={() => <Dashboard players={players} teams={activeTeams} matches={matches} setPlayers={setPlayers} rodada={activeRodada} setActiveRodadaId={setActiveRodadaId} rodadas={rodadas} />} /><Route path="/rodadas" component={() => <RodasPage rodadas={rodadas} setRodadas={setRodadas} activeRodadaId={activeRodadaId} setActiveRodadaId={setActiveRodadaId} />} /><Route path="/jogadores" component={() => <PlayersPage players={players} setPlayers={setPlayers} />} /><Route path="/times" component={() => <TeamsPage teams={activeTeams} players={players} setTeams={setTeams} activeRodadaId={activeRodadaId} />} /><Route path="/sorteio" component={() => <DrawPage players={players} teams={activeTeams} setTeams={setTeams} setMatches={setMatches} activeRodadaId={activeRodadaId} />} /><Route path="/live-scoring" component={() => <LiveScoringPage teams={activeTeams} players={players} matches={matches} setMatches={setMatches} activeRodadaId={activeRodadaId} />} /><Route path="/rankings" component={() => <RankingsPage players={players} matches={matches} />} /><Route><NotFound /></Route></Switch></Shell>;
+  return <Shell rodadas={rodadas}><Switch><Route path="/" component={() => <Dashboard players={players} teams={activeTeams} matches={matches} setPlayers={setPlayers} rodada={activeRodada} setActiveRodadaId={setActiveRodadaId} rodadas={rodadas} />} /><Route path="/rodadas" component={() => <RodasPage rodadas={rodadas} setRodadas={setRodadas} activeRodadaId={activeRodadaId} setActiveRodadaId={setActiveRodadaId} />} /><Route path="/jogadores" component={() => <PlayersPage players={players} setPlayers={setPlayers} />} /><Route path="/times" component={() => <TeamsPage teams={activeTeams} players={players} setTeams={setTeams} activeRodadaId={activeRodadaId} />} /><Route path="/sorteio" component={() => <DrawPage players={players} teams={activeTeams} setTeams={setTeams} setMatches={setMatches} activeRodadaId={activeRodadaId} />} /><Route path="/live-scoring" component={() => <LiveScoringPage players={players} playerEvents={playerEvents} setPlayerEvents={setPlayerEvents} />} /><Route path="/rankings" component={() => <RankingsPage players={players} playerEvents={playerEvents} />} /><Route><NotFound /></Route></Switch></Shell>;
 }
 
 function NotFound() {
