@@ -75,8 +75,8 @@ function Stars({ value, onChange, label }: { value: number; onChange?: (value: n
 }
 
 function Modal({ title, children, onClose, wide = false }: { title: string; children: ReactNode; onClose: () => void; wide?: boolean }) {
-  return <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#102d22]/50 p-0 backdrop-blur-sm sm:items-center sm:p-5 animate-fade" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <div className={`w-full ${wide ? 'max-w-2xl' : 'max-w-xl'} max-h-[92dvh] overflow-y-auto rounded-t-[1.6rem] border bg-card p-5 shadow-2xl sm:rounded-[1.6rem] sm:p-7 animate-rise`}>
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#102d22]/50 p-4 backdrop-blur-sm overflow-y-auto animate-fade" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <div className={`w-full ${wide ? 'max-w-2xl' : 'max-w-xl'} max-h-[90vh] overflow-y-auto rounded-[1.6rem] border bg-card p-5 shadow-2xl sm:p-7 animate-rise my-auto`}>
       <div className="mb-5 flex items-start justify-between gap-4"><div><p className="mb-1 font-display text-[11px] font-bold uppercase tracking-[.2em] text-muted-foreground">Pelada Pro</p><h2 className="font-display text-3xl font-bold uppercase leading-none">{title}</h2></div><button data-testid="button-close-modal" onClick={onClose} className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground"><X className="size-5" /></button></div>
       {children}
     </div>
