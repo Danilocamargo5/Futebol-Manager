@@ -76,6 +76,7 @@ const navItems = [
   { href: '/jogadores', label: 'Jogadores', icon: Users },
   { href: '/times', label: 'Times', icon: Shield },
   { href: '/sorteio', label: 'Sorteio', icon: Shuffle },
+  { href: '/live-scoring', label: 'Live Scoring', icon: Activity },
   { href: '/rankings', label: 'Rankings', icon: Trophy },
 ];
 
@@ -133,8 +134,8 @@ function Dashboard({ players, teams, matches, setPlayers, rodada, setActiveRodad
   return <div className="animate-rise">
     <PageHeading eyebrow={rodada ? `${rodadaDayName.toUpperCase()}, ${rodada.time} · ${rodada.location}` : 'selecione uma rodada'} title={rodada ? <>A rodada está<br /><span className="text-[#f97316]">pronta.</span></> : <>Nenhuma rodada<br /><span className="text-[#f97316]">selecionada.</span></>} description={rodada ? 'Confira a presença e deixe o sorteio fazer o trabalho pesado.' : 'Selecione uma rodada em "Rodadas" para começar.'} action={rodada ? <Button icon={Shuffle} onClick={() => setLocation('/sorteio')} testId="button-dashboard-draw">Montar times</Button> : <Button icon={CalendarDays} onClick={() => setLocation('/rodadas')} testId="button-dashboard-rodadas">Ir para rodadas</Button>} />
     {rodada && <section className="relative mb-6 overflow-hidden rounded-[1.6rem] bg-[#1d5037] p-6 text-[#f5f1e5] shadow-sm sm:p-8"><div className="absolute -right-10 -top-16 size-56 rounded-full border-[28px] border-[#376b4d]/50" /><div className="absolute -bottom-24 right-24 size-64 rounded-full border border-[#c8f169]/20" /><div className="relative grid gap-8 md:grid-cols-[1fr_auto] md:items-center"><div><div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.18em] text-[#c8f169]"><CalendarDays className="size-4" /> Rodada ativa</div><h2 className="mt-3 font-display text-4xl font-black uppercase sm:text-5xl">{fullDate(rodada.date)}</h2><p className="mt-2 text-sm text-[#b6cdb9]">{rodada.time} · {rodada.location}{rodada.description ? ` · ${rodada.description}` : ''}</p></div><div className="flex items-center gap-3 rounded-2xl bg-[#153f2c] px-5 py-4 cursor-pointer hover:bg-[#1a4d35] transition" onClick={() => setLocation('/jogadores')} title="Ir para Jogadores"><div className="grid size-12 place-items-center rounded-full bg-[#c8f169] text-[#143b2a]"><Users className="size-5" /></div><div><p className="font-display text-3xl font-black leading-none">{present.length}<span className="text-[#8eaa99]">/{players.length}</span></p><p className="mt-1 text-xs text-[#b6cdb9]">confirmados</p></div></div></div></section>}
-    <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4"><StatCard label="Jogadores" value={players.length} hint={`${present.length} presentes na rodada`} icon={Users} accent="bg-[#d9f3a1] text-[#456b31]" href="/jogadores" /><StatCard label="Times ativos" value={teams.length} hint="sorteados nesta rodada" icon={Shield} accent="bg-[#f9d995] text-[#835d1b]" href="/times" /><StatCard label="Rankings" value={matches.length} hint="histórico total" icon={Trophy} accent="bg-[#f7c9bf] text-[#a34839]" href="/rankings" /><StatCard label="Quem vem jogar" value={present.length} hint={`de ${players.length} confirmados`} icon={Users} accent="bg-[#d7d3f0] text-[#59558c]" href="/jogadores" /></div>
-    {matches.length > 0 && <section className="rounded-2xl border bg-card p-5 sm:p-6"><div className="mb-5 flex items-center justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.18em] text-muted-foreground">Top de cada ranking</p><h3 className="mt-1 font-display text-2xl font-black uppercase">Destaques</h3></div><Link href="/rankings" data-testid="link-dashboard-ranking" className="text-xs font-bold text-[#487b4f] hover:underline">Ver rankings <ArrowRight className="ml-1 inline size-3" /></Link></div><div className="grid gap-4 sm:grid-cols-3">{topScorer && <div className="flex items-center gap-3 rounded-lg bg-[#f8d0c8]/30 p-4"><div className="flex flex-col gap-2 flex-1"><p className="text-[10px] font-bold uppercase text-muted-foreground">🏆 Artilheiro</p><p className="text-xs font-bold">{topScorer.player.nickname}</p><p className="text-[11px] font-black text-[#f97316]">{topScorer.count} gols</p></div></div>}{topAssist && <div className="flex items-center gap-3 rounded-lg bg-[#f9d995]/30 p-4"><div className="flex flex-col gap-2 flex-1"><p className="text-[10px] font-bold uppercase text-muted-foreground">🎯 Assistência</p><p className="text-xs font-bold">{topAssist.player.nickname}</p><p className="text-[11px] font-black text-[#f97316]">{topAssist.count} assistências</p></div></div>}{topKeeper && <div className="flex items-center gap-3 rounded-lg bg-[#d9f3a1]/30 p-4"><div className="flex flex-col gap-2 flex-1"><p className="text-[10px] font-bold uppercase text-muted-foreground">🛡️ Melhor goleiro</p><p className="text-xs font-bold">{topKeeper.player.nickname}</p><p className="text-[11px] font-black text-[#f97316]">{topKeeper.count} destaques</p></div></div>}</div></section>}
+    <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4"><StatCard label="Jogadores" value={players.length} hint={`${present.length} presentes na rodada`} icon={Users} accent="bg-[#d9f3a1] text-[#456b31]" href="/rodadas" /><StatCard label="Times ativos" value={teams.length} hint="sorteados nesta rodada" icon={Shield} accent="bg-[#f9d995] text-[#835d1b]" href="/times" /><StatCard label="Rankings" value={matches.length} hint="histórico total" icon={Trophy} accent="bg-[#f7c9bf] text-[#a34839]" href="/rankings" /><StatCard label="Quem vem jogar" value={present.length} hint={`de ${players.length} confirmados`} icon={Users} accent="bg-[#d7d3f0] text-[#59558c]" href="/jogadores" /></div>
+    {matches.length > 0 && <section className="rounded-2xl border bg-card p-5 sm:p-6"><div className="mb-5 flex items-center justify-between"><div><p className="text-[10px] font-black uppercase tracking-[.18em] text-muted-foreground">Top de cada ranking</p><h3 className="mt-1 font-display text-2xl font-black uppercase">Destaques</h3></div><Link href="/live-scoring" data-testid="link-dashboard-live-scoring" className="text-xs font-bold text-[#487b4f] hover:underline">Live Scoring <ArrowRight className="ml-1 inline size-3" /></Link></div><div className="grid gap-4 sm:grid-cols-3">{topScorer && <div className="flex items-center gap-3 rounded-lg bg-[#f8d0c8]/30 p-4"><div className="flex flex-col gap-2 flex-1"><p className="text-[10px] font-bold uppercase text-muted-foreground">🏆 Artilheiro</p><p className="text-xs font-bold">{topScorer.player.nickname}</p><p className="text-[11px] font-black text-[#f97316]">{topScorer.count} gols</p></div></div>}{topAssist && <div className="flex items-center gap-3 rounded-lg bg-[#f9d995]/30 p-4"><div className="flex flex-col gap-2 flex-1"><p className="text-[10px] font-bold uppercase text-muted-foreground">🎯 Assistência</p><p className="text-xs font-bold">{topAssist.player.nickname}</p><p className="text-[11px] font-black text-[#f97316]">{topAssist.count} assistências</p></div></div>}{topKeeper && <div className="flex items-center gap-3 rounded-lg bg-[#d9f3a1]/30 p-4"><div className="flex flex-col gap-2 flex-1"><p className="text-[10px] font-bold uppercase text-muted-foreground">🛡️ Melhor goleiro</p><p className="text-xs font-bold">{topKeeper.player.nickname}</p><p className="text-[11px] font-black text-[#f97316]">{topKeeper.count} destaques</p></div></div>}</div></section>}
   </div>;
 }
 
@@ -231,6 +232,104 @@ function GoalInputs({ title, goals, players, onChange }: { title: string; goals:
   return <div><p className="field-label">{title} <span className="font-normal text-muted-foreground">({goals.length})</span></p>{goals.length ? <div className="space-y-2">{goals.map((goal, index) => <select data-testid={`select-goal-${title}-${index}`} key={`${title}-${index}`} value={goal} onChange={(e) => onChange(index, e.target.value)} className="field-input"><option value="">Autor do gol</option>{players.map((player) => <option key={player.id} value={player.id}>{player.nickname}</option>)}</select>)}</div> : <div className="rounded-xl border border-dashed p-3 text-center text-xs text-muted-foreground">Informe o placar para adicionar autores.</div>}</div>;
 }
 
+function LiveScoringPage({ teams, players, matches, setMatches, activeRodadaId }: { teams: Team[]; players: Player[]; matches: Match[]; setMatches: (value: Match[] | ((old: Match[]) => Match[])) => void; activeRodadaId: string }) {
+  const [scoreA, setScoreA] = useState(0);
+  const [scoreB, setScoreB] = useState(0);
+  const [goalsA, setGoalsA] = useState<string[]>([]);
+  const [goalsB, setGoalsB] = useState<string[]>([]);
+  const [assistsA, setAssistsA] = useState<string[]>([]);
+  const [assistsB, setAssistsB] = useState<string[]>([]);
+  const [bestKeeper, setBestKeeper] = useState<string | null>(null);
+  
+  const teamA = teams[0];
+  const teamB = teams[1];
+  
+  if (!teamA || !teamB) {
+    return <div className="animate-rise"><PageHeading eyebrow="registro em tempo real" title="Live Scoring" description="Registre os gols, assistências e melhor goleiro da partida." /><EmptyState icon={ClipboardList} title="Sem times selecionados" text="Vá para Sorteio e monte os times primeiro." action={<Button onClick={() => {}} href="/sorteio">Ir para Sorteio</Button>} /></div>;
+  }
+  
+  const teamAPlayers = players.filter(p => teamA.playerIds.includes(p.id));
+  const teamBPlayers = players.filter(p => teamB.playerIds.includes(p.id));
+  
+  const handleAddGoal = (teamSide: 'A' | 'B', playerId: string) => {
+    if (teamSide === 'A') {
+      setGoalsA([...goalsA, playerId]);
+      setScoreA(scoreA + 1);
+    } else {
+      setGoalsB([...goalsB, playerId]);
+      setScoreB(scoreB + 1);
+    }
+  };
+  
+  const handleAddAssist = (teamSide: 'A' | 'B', playerId: string) => {
+    if (teamSide === 'A') {
+      setAssistsA([...assistsA, playerId]);
+    } else {
+      setAssistsB([...assistsB, playerId]);
+    }
+  };
+  
+  const handleSaveMatch = () => {
+    if (!bestKeeper) {
+      alert('Selecione o melhor goleiro');
+      return;
+    }
+    
+    const match: Match = {
+      id: id(),
+      date: new Date().toISOString().split('T')[0],
+      teamA: teamA.name,
+      teamB: teamB.name,
+      scoreA,
+      scoreB,
+      goalsA,
+      goalsB,
+      assistsA,
+      assistsB,
+      bestKeeper,
+    };
+    
+    setMatches(old => [match, ...old]);
+    alert('Partida registrada com sucesso!');
+    setScoreA(0);
+    setScoreB(0);
+    setGoalsA([]);
+    setGoalsB([]);
+    setAssistsA([]);
+    setAssistsB([]);
+    setBestKeeper(null);
+  };
+  
+  return <div className="animate-rise">
+    <PageHeading eyebrow={`${teamA.name} vs ${teamB.name}`} title="Live Scoring" description="Registre gols, assistências e o melhor goleiro em tempo real." action={<Button icon={Check} onClick={handleSaveMatch} testId="button-save-match">Salvar Partida</Button>} />
+    
+    <div className="mb-6 rounded-2xl border bg-card p-6">
+      <div className="mb-8 flex items-center justify-between text-center">
+        <div className="flex-1"><h3 className="font-display text-3xl font-black uppercase">{teamA.name}</h3><p className="mt-2 text-muted-foreground">{teamA.playerIds.length} jogadores</p></div>
+        <div className="mx-6 font-display text-6xl font-black">{scoreA} <span className="text-2xl text-muted-foreground">×</span> {scoreB}</div>
+        <div className="flex-1"><h3 className="font-display text-3xl font-black uppercase">{teamB.name}</h3><p className="mt-2 text-muted-foreground">{teamB.playerIds.length} jogadores</p></div>
+      </div>
+      
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-lg border bg-muted/20 p-4">
+          <p className="mb-3 text-xs font-bold uppercase">Clique para registrar gol</p>
+          <div className="space-y-2">{teamAPlayers.map(player => <button key={player.id} onClick={() => handleAddGoal('A', player.id)} className="w-full rounded-lg bg-[#f8d0c8]/50 p-3 text-left text-xs font-bold hover:bg-[#f8d0c8] transition"><span>{player.nickname || player.name}</span>{goalsA.includes(player.id) && <span className="float-right text-[#f97316]">⚽ {goalsA.filter(g => g === player.id).length}</span>}</button>)}</div>
+        </div>
+        
+        <div className="rounded-lg border bg-muted/20 p-4">
+          <p className="mb-3 text-xs font-bold uppercase">Clique para registrar gol</p>
+          <div className="space-y-2">{teamBPlayers.map(player => <button key={player.id} onClick={() => handleAddGoal('B', player.id)} className="w-full rounded-lg bg-[#d9f3a1]/50 p-3 text-left text-xs font-bold hover:bg-[#d9f3a1] transition"><span>{player.nickname || player.name}</span>{goalsB.includes(player.id) && <span className="float-right text-[#f97316]">⚽ {goalsB.filter(g => g === player.id).length}</span>}</button>)}</div>
+        </div>
+      </div>
+    </div>
+    
+    <div className="mb-6 rounded-2xl border bg-card p-6">
+      <p className="mb-4 text-xs font-bold uppercase tracking-[.18em]">Melhor Goleiro</p>
+      <div className="grid gap-3 sm:grid-cols-2">{[...teamAPlayers, ...teamBPlayers].map(player => <button key={player.id} onClick={() => setBestKeeper(player.id)} className={`rounded-lg border-2 p-3 text-left text-xs font-bold transition ${bestKeeper === player.id ? 'border-[#f97316] bg-[#f97316]/10' : 'border-muted hover:border-[#f97316]/50'}`}>{player.nickname || player.name} {bestKeeper === player.id && <span className="float-right">🏆</span>}</button>)}</div>
+    </div>
+  </div>;
+}
+
 function RankingsPage({ players, matches }: { players: Player[]; matches: Match[] }) {
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>('month');
   const since = period === 'week' ? 7 : period === 'month' ? 30 : 365;
@@ -312,7 +411,7 @@ function AppContent() {
   const activeRodada = rodadas.find((r) => r.id === activeRodadaId);
   const activeTeams = teams.filter((t) => t.rodadaId === activeRodadaId);
   
-  return <Shell rodadas={rodadas}><Switch><Route path="/" component={() => <Dashboard players={players} teams={activeTeams} matches={matches} setPlayers={setPlayers} rodada={activeRodada} setActiveRodadaId={setActiveRodadaId} rodadas={rodadas} />} /><Route path="/rodadas" component={() => <RodasPage rodadas={rodadas} setRodadas={setRodadas} activeRodadaId={activeRodadaId} setActiveRodadaId={setActiveRodadaId} />} /><Route path="/jogadores" component={() => <PlayersPage players={players} setPlayers={setPlayers} />} /><Route path="/times" component={() => <TeamsPage teams={activeTeams} players={players} setTeams={setTeams} activeRodadaId={activeRodadaId} />} /><Route path="/sorteio" component={() => <DrawPage players={players} teams={activeTeams} setTeams={setTeams} setMatches={setMatches} activeRodadaId={activeRodadaId} />} /><Route path="/rankings" component={() => <RankingsPage players={players} matches={matches} />} /><Route><NotFound /></Route></Switch></Shell>;
+  return <Shell rodadas={rodadas}><Switch><Route path="/" component={() => <Dashboard players={players} teams={activeTeams} matches={matches} setPlayers={setPlayers} rodada={activeRodada} setActiveRodadaId={setActiveRodadaId} rodadas={rodadas} />} /><Route path="/rodadas" component={() => <RodasPage rodadas={rodadas} setRodadas={setRodadas} activeRodadaId={activeRodadaId} setActiveRodadaId={setActiveRodadaId} />} /><Route path="/jogadores" component={() => <PlayersPage players={players} setPlayers={setPlayers} />} /><Route path="/times" component={() => <TeamsPage teams={activeTeams} players={players} setTeams={setTeams} activeRodadaId={activeRodadaId} />} /><Route path="/sorteio" component={() => <DrawPage players={players} teams={activeTeams} setTeams={setTeams} setMatches={setMatches} activeRodadaId={activeRodadaId} />} /><Route path="/live-scoring" component={() => <LiveScoringPage teams={activeTeams} players={players} matches={matches} setMatches={setMatches} activeRodadaId={activeRodadaId} />} /><Route path="/rankings" component={() => <RankingsPage players={players} matches={matches} />} /><Route><NotFound /></Route></Switch></Shell>;
 }
 
 function NotFound() {
