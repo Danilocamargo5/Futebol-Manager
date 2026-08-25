@@ -115,5 +115,8 @@
 .field-label { display: block; margin-bottom: .45rem; font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: hsl(var(--muted-foreground)); }
 .field-input { width: 100%; border: 1px solid hsl(var(--input)); border-radius: .75rem; background: hsl(var(--card)); padding: .7rem .8rem; font-size: .875rem; color: hsl(var(--foreground)); outline: none; transition: border-color .2s, box-shadow .2s; }
 .field-input:focus { border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--ring) / .24); }
+/* Melhorar selects para evitar encavalamento de ícones */
+select.field-input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667d73' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right .7rem center; padding-right: 2rem; }
+select.field-input:focus { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23143b2a' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); }
 .score-input { width: 100%; border: 1px solid hsl(var(--input)); border-radius: .75rem; background: hsl(var(--card)); padding: .55rem; text-align: center; font-family: var(--app-font-display); font-size: 2.2rem; font-weight: 800; outline: none; }
 .score-input:focus { border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--ring) / .24); }
