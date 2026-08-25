@@ -8,9 +8,11 @@ import {
 
 type Position = 'Goleiro' | 'Defesa' | 'Meio' | 'Ataque';
 type Ratings = { goleiro: number; defesa: number; meio: number; ataque: number };
-type Player = { id: string; name: string; nickname: string; teamId: string; position: Position; ratings: Ratings; present: boolean; };
+type Player = { id: string; name: string; nickname: string; position: Position; ratings: Ratings; present: boolean; };
 type Team = { id: string; name: string; color: string; playersPerTeam?: number; };
 type Match = { id: string; date: string; teamA: string; teamB: string; scoreA: number; scoreB: number; goalsA: string[]; goalsB: string[]; bestKeeper: string; };
+type RepeatType = 'never' | 'weekly' | 'biweekly' | 'monthly';
+type Rodada = { id: string; date: string; time: string; location: string; description?: string; repeatType?: RepeatType; repeatUntil?: string; createdAt: string; };
 
 const COLORS = ['#ef6b59', '#f2bd45', '#5d8f68', '#7a78bc', '#42a6a0'];
 const positions: Position[] = ['Goleiro', 'Defesa', 'Meio', 'Ataque'];
@@ -25,18 +27,21 @@ const seedTeams: Team[] = [
   { id: 'varzea', name: 'Várzea 12', color: '#7a78bc', playersPerTeam: 7 },
 ];
 const seedPlayers: Player[] = [
-  { id: 'p1', name: 'André Nascimento', nickname: 'Dedé', teamId: 'raiz', position: 'Meio', ratings: { goleiro: 0, defesa: 2, meio: 3, ataque: 2 }, present: true },
-  { id: 'p2', name: 'Bruno Tavares', nickname: 'Brunão', teamId: 'raiz', position: 'Ataque', ratings: { goleiro: 0, defesa: 1, meio: 2, ataque: 3 }, present: true },
-  { id: 'p3', name: 'Caio Martins', nickname: 'Caio', teamId: 'banco', position: 'Goleiro', ratings: { goleiro: 3, defesa: 2, meio: 1, ataque: 0 }, present: true },
-  { id: 'p4', name: 'Davi Oliveira', nickname: 'DVD', teamId: 'banco', position: 'Defesa', ratings: { goleiro: 0, defesa: 3, meio: 2, ataque: 1 }, present: true },
-  { id: 'p5', name: 'Eduardo Paes', nickname: 'Edu', teamId: 'varzea', position: 'Ataque', ratings: { goleiro: 0, defesa: 1, meio: 2, ataque: 3 }, present: true },
-  { id: 'p6', name: 'Felipe Rocha', nickname: 'Fê', teamId: 'varzea', position: 'Meio', ratings: { goleiro: 0, defesa: 2, meio: 3, ataque: 2 }, present: true },
-  { id: 'p7', name: 'Gustavo Lima', nickname: 'Guga', teamId: 'raiz', position: 'Defesa', ratings: { goleiro: 1, defesa: 3, meio: 1, ataque: 1 }, present: true },
-  { id: 'p8', name: 'Hugo Reis', nickname: 'Huguinho', teamId: 'banco', position: 'Meio', ratings: { goleiro: 0, defesa: 1, meio: 3, ataque: 2 }, present: true },
-  { id: 'p9', name: 'Ítalo Moura', nickname: 'Itão', teamId: 'varzea', position: 'Goleiro', ratings: { goleiro: 3, defesa: 1, meio: 0, ataque: 0 }, present: true },
-  { id: 'p10', name: 'Júlio Mendes', nickname: 'Julinho', teamId: 'raiz', position: 'Ataque', ratings: { goleiro: 0, defesa: 1, meio: 2, ataque: 2 }, present: false },
-  { id: 'p11', name: 'Léo Cardoso', nickname: 'Léo', teamId: 'banco', position: 'Defesa', ratings: { goleiro: 0, defesa: 2, meio: 2, ataque: 1 }, present: false },
-  { id: 'p12', name: 'Murilo Alves', nickname: 'Muri', teamId: 'varzea', position: 'Meio', ratings: { goleiro: 0, defesa: 1, meio: 2, ataque: 2 }, present: false },
+  { id: 'p1', name: 'André Nascimento', nickname: 'Dedé', position: 'Meio', ratings: { goleiro: 0, defesa: 2, meio: 3, ataque: 2 }, present: true },
+  { id: 'p2', name: 'Bruno Tavares', nickname: 'Brunão', position: 'Ataque', ratings: { goleiro: 0, defesa: 1, meio: 2, ataque: 3 }, present: true },
+  { id: 'p3', name: 'Caio Martins', nickname: 'Caio', position: 'Goleiro', ratings: { goleiro: 3, defesa: 2, meio: 1, ataque: 0 }, present: true },
+  { id: 'p4', name: 'Davi Oliveira', nickname: 'DVD', position: 'Defesa', ratings: { goleiro: 0, defesa: 3, meio: 2, ataque: 1 }, present: true },
+  { id: 'p5', name: 'Eduardo Paes', nickname: 'Edu', position: 'Ataque', ratings: { goleiro: 0, defesa: 1, meio: 2, ataque: 3 }, present: true },
+  { id: 'p6', name: 'Felipe Rocha', nickname: 'Fê', position: 'Meio', ratings: { goleiro: 0, defesa: 2, meio: 3, ataque: 2 }, present: true },
+  { id: 'p7', name: 'Gustavo Lima', nickname: 'Guga', position: 'Defesa', ratings: { goleiro: 1, defesa: 3, meio: 1, ataque: 1 }, present: true },
+  { id: 'p8', name: 'Hugo Reis', nickname: 'Huguinho', position: 'Meio', ratings: { goleiro: 0, defesa: 1, meio: 3, ataque: 2 }, present: true },
+  { id: 'p9', name: 'Ítalo Moura', nickname: 'Itão', position: 'Goleiro', ratings: { goleiro: 3, defesa: 1, meio: 0, ataque: 0 }, present: true },
+  { id: 'p10', name: 'Júlio Mendes', nickname: 'Julinho', position: 'Ataque', ratings: { goleiro: 0, defesa: 1, meio: 2, ataque: 2 }, present: false },
+  { id: 'p11', name: 'Léo Cardoso', nickname: 'Léo', position: 'Defesa', ratings: { goleiro: 0, defesa: 2, meio: 2, ataque: 1 }, present: false },
+  { id: 'p12', name: 'Murilo Alves', nickname: 'Muri', position: 'Meio', ratings: { goleiro: 0, defesa: 1, meio: 2, ataque: 2 }, present: false },
+];
+const seedRodadas: Rodada[] = [
+  { id: 'r1', date: new Date(Date.now() + 86400000).toISOString().split('T')[0], time: '20:00', location: 'Quadra do Zé', description: 'Próxima rodada confirmada', repeatType: 'weekly', repeatUntil: new Date(Date.now() + 86400000 * 30).toISOString().split('T')[0], createdAt: new Date().toISOString() },
 ];
 const seedMatches: Match[] = [
   { id: 'm1', date: isoDaysAgo(3), teamA: 'Raiz FC', teamB: 'Banco de Areia', scoreA: 5, scoreB: 3, goalsA: ['p2', 'p2', 'p1', 'p5', 'p6'], goalsB: ['p4', 'p8', 'p3'], bestKeeper: 'p3' },
@@ -91,6 +96,7 @@ function Logo() {
 
 const navItems = [
   { href: '/', label: 'Visão geral', icon: LayoutDashboard },
+  { href: '/rodadas', label: 'Rodadas', icon: CalendarDays },
   { href: '/jogadores', label: 'Jogadores', icon: Users },
   { href: '/times', label: 'Times', icon: Shield },
   { href: '/sorteio', label: 'Sorteio', icon: Shuffle },
