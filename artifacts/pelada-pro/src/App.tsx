@@ -438,16 +438,25 @@ function AppContent() {
   const [rodadas, setRodadas] = useStored<Rodada[]>('pelada-pro-rodadas', seedRodadas);
   const [activeRodadaId, setActiveRodadaId] = useStored<string>('pelada-pro-active-rodada', seedRodadas[0]?.id ?? '');
   
-  // Limpar times com cores inválidas ou nomes concatenados
+  // Limpar times com cores inválidas ou nomes concatenados + normalizar jogadores ativos
   useEffect(() => {
+    // Normalizar jogadores: garantir que todos têm campo 'active'
+    const normalizedPlayers = players.map(p => ({
+      ...p,
+      active: p.active !== false  // Se undefined ou true, deixa true; só false fica false
+    }));
+    
     const validTeams = teams.filter(t => COLORS.includes(t.color));
     const cleanedTeams = validTeams.map(t => ({
       ...t,
       name: extractBaseName(t.name) + ' ' + COLOR_NAMES[t.color]
     }));
-    if (cleanedTeams.length !== teams.length || JSON.stringify(cleanedTeams) !== JSON.stringify(teams)) {
-      setTeams(cleanedTeams);
-    }
+    
+    const playersChanged = JSON.stringify(normalizedPlayers) !== JSON.stringify(players);
+    const teamsChanged = cleanedTeams.length !== teams.length || JSON.stringify(cleanedTeams) !== JSON.stringify(teams);
+    
+    if (playersChanged) setPlayers(normalizedPlayers);
+    if (teamsChanged) setTeams(cleanedTeams);
   }, []);
   
   const activeRodada = rodadas.find((r) => r.id === activeRodadaId);
