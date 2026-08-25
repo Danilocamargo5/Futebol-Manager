@@ -231,11 +231,48 @@ function RankingCard({ title, subtitle, icon: Icon, color, items, suffix, keeper
   return <section className="overflow-hidden rounded-2xl border bg-card"><div className="flex items-center gap-3 border-b p-5"><span className={`grid size-11 place-items-center rounded-xl ${color}`}><Icon className="size-5" /></span><div><h2 className="font-display text-2xl font-black uppercase">{title}</h2><p className="text-xs text-muted-foreground">{subtitle}</p></div></div>{items.length ? <div className="divide-y">{items.slice(0, 8).map((item, index) => <div data-testid={`row-ranking-${keeper ? 'keeper' : 'scorer'}-${item.player.id}`} key={item.player.id} className="flex items-center gap-3 px-5 py-3.5"><span className={`font-display text-2xl font-black ${index === 0 ? 'text-[#c08c2d]' : 'text-muted-foreground'}`}>{String(index + 1).padStart(2, '0')}</span><span className="grid size-9 place-items-center rounded-full bg-muted text-[10px] font-black">{initials(item.player.name)}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{item.player.nickname}</p><p className="text-xs text-muted-foreground">{item.player.position}</p></div><div className="text-right"><p className="font-display text-2xl font-black">{item.count}</p><p className="text-[10px] font-bold uppercase text-muted-foreground">{suffix}</p></div>{index === 0 && item.count > 0 && <Award className="size-5 text-[#c08c2d]" />}</div>)}</div> : <EmptyState icon={Trophy} title="Sem números ainda" text="Registre partidas para este ranking ganhar vida." />}</section>;
 }
 
+function RodasPage({ rodadas, setRodadas }: { rodadas: Rodada[]; setRodadas: (value: Rodada[] | ((old: Rodada[]) => Rodada[])) => void }) {
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const handleSave = (rodada: Omit<Rodada, 'id' | 'createdAt'>) => {
+    if (editingId) {
+      setRodadas((old) => old.map((r) => r.id === editingId ? { ...rodada, id: editingId, createdAt: new Date().toISOString() } : r));
+      setEditingId(null);
+    } else {
+      setRodadas((old) => [{ ...rodada, id: id(), createdAt: new Date().toISOString() }, ...old]);
+    }
+    setShowForm(false);
+  };
+
+  const handleDelete = (rodadaId: string) => {
+    setRodadas((old) => old.filter((r) => r.id !== rodadaId));
+  };
+
+  const editing = editingId ? rodadas.find((r) => r.id === editingId) : null;
+
+  const repeatLabels: Record<RepeatType, string> = { never: 'Única', weekly: 'Semanal', biweekly: 'Quinzenal', monthly: 'Mensal' };
+
+  return <div className="animate-rise"><PageHeading eyebrow="agendamento" title="Rodadas" description="Crie e gerencie suas partidas com templates repetidores." action={<Button icon={Plus} onClick={() => { setEditingId(null); setShowForm(true); }} testId="button-new-rodada">Criar rodada</Button>} /><div className="grid gap-4">{rodadas.map((rodada) => <div key={rodada.id} data-testid={`card-rodada-${rodada.id}`} className="group rounded-2xl border bg-card p-5 hover:bg-muted/50 transition"><div className="flex items-start justify-between gap-4"><div className="flex-1 min-w-0"><div className="flex items-center gap-2 mb-2"><CalendarDays className="size-4 text-muted-foreground flex-shrink-0" /><span className="font-display text-sm font-bold text-foreground">{fullDate(rodada.date)} às {rodada.time}</span></div><p className="font-display text-xl font-black uppercase mb-1">{rodada.location}</p>{rodada.description && <p className="text-sm text-muted-foreground mb-3">{rodada.description}</p>}{rodada.repeatType && <div className="inline-block rounded-lg bg-primary/10 px-2 py-1 text-xs font-bold text-primary">{repeatLabels[rodada.repeatType]} {rodada.repeatUntil ? `até ${fullDate(rodada.repeatUntil)}` : ''}</div>}</div><div className="flex gap-2 opacity-0 group-hover:opacity-100 transition"><button data-testid={`button-edit-rodada-${rodada.id}`} onClick={() => { setEditingId(rodada.id); setShowForm(true); }} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition"><Pencil className="size-4" /></button><button data-testid={`button-delete-rodada-${rodada.id}`} onClick={() => handleDelete(rodada.id)} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition"><Trash2 className="size-4" /></button></div></div></div>)}{!rodadas.length && <EmptyState icon={CalendarDays} title="Sem rodadas agendadas" text="Crie sua primeira rodada para começar a organizar as partidas." />}</div>{showForm && <RodadaForm initialData={editing} onClose={() => { setShowForm(false); setEditingId(null); }} onSave={handleSave} />}</div>;
+}
+
+function RodadaForm({ initialData, onClose, onSave }: { initialData?: Rodada | null; onClose: () => void; onSave: (rodada: Omit<Rodada, 'id' | 'createdAt'>) => void }) {
+  const [date, setDate] = useState(initialData?.date ?? new Date(Date.now() + 86400000).toISOString().split('T')[0]);
+  const [time, setTime] = useState(initialData?.time ?? '20:00');
+  const [location, setLocation] = useState(initialData?.location ?? '');
+  const [description, setDescription] = useState(initialData?.description ?? '');
+  const [repeatType, setRepeatType] = useState<RepeatType>(initialData?.repeatType ?? 'never');
+  const [repeatUntil, setRepeatUntil] = useState(initialData?.repeatUntil ?? '');
+
+  return <Modal title={initialData ? 'Editar rodada' : 'Nova rodada'} onClose={onClose}><form onSubmit={(e) => { e.preventDefault(); onSave({ date, time, location, description, repeatType: repeatType === 'never' ? undefined : repeatType, repeatUntil: repeatUntil || undefined }); }} className="space-y-4"><label><span className="field-label">Data</span><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="field-input" required /></label><label><span className="field-label">Horário</span><input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="field-input" required /></label><label><span className="field-label">Local</span><input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Ex: Quadra do Zé" className="field-input" required /></label><label><span className="field-label">Descrição (opcional)</span><input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex: Próxima rodada confirmada" className="field-input" /></label><label><span className="field-label">Repetir</span><select value={repeatType} onChange={(e) => setRepeatType(e.target.value as RepeatType)} className="field-input"><option value="never">Única (não repetir)</option><option value="weekly">Semanal</option><option value="biweekly">Quinzenal</option><option value="monthly">Mensal</option></select></label>{repeatType !== 'never' && <label><span className="field-label">Repetir até (opcional)</span><input type="date" value={repeatUntil} onChange={(e) => setRepeatUntil(e.target.value)} className="field-input" /></label>}<div className="flex justify-end gap-2 border-t pt-4"><Button variant="outline" onClick={onClose}>Cancelar</Button><Button type="submit" icon={Check}>{initialData ? 'Atualizar' : 'Criar'}</Button></div></form></Modal>;
+}
+
 function AppContent() {
   const [players, setPlayers] = useStored<Player[]>('pelada-pro-players', seedPlayers);
   const [teams, setTeams] = useStored<Team[]>('pelada-pro-teams', seedTeams);
   const [matches, setMatches] = useStored<Match[]>('pelada-pro-matches', seedMatches);
-  return <Shell><Switch><Route path="/" component={() => <Dashboard players={players} teams={teams} matches={matches} setPlayers={setPlayers} />} /><Route path="/jogadores" component={() => <PlayersPage players={players} teams={teams} setPlayers={setPlayers} />} /><Route path="/times" component={() => <TeamsPage teams={teams} players={players} setTeams={setTeams} />} /><Route path="/sorteio" component={() => <DrawPage players={players} teams={teams} setMatches={setMatches} />} /><Route path="/rankings" component={() => <RankingsPage players={players} matches={matches} />} /><Route><NotFound /></Route></Switch></Shell>;
+  const [rodadas, setRodadas] = useStored<Rodada[]>('pelada-pro-rodadas', seedRodadas);
+  return <Shell><Switch><Route path="/" component={() => <Dashboard players={players} teams={teams} matches={matches} setPlayers={setPlayers} />} /><Route path="/rodadas" component={() => <RodasPage rodadas={rodadas} setRodadas={setRodadas} />} /><Route path="/jogadores" component={() => <PlayersPage players={players} teams={teams} setPlayers={setPlayers} />} /><Route path="/times" component={() => <TeamsPage teams={teams} players={players} setTeams={setTeams} />} /><Route path="/sorteio" component={() => <DrawPage players={players} teams={teams} setMatches={setMatches} />} /><Route path="/rankings" component={() => <RankingsPage players={players} matches={matches} />} /><Route><NotFound /></Route></Switch></Shell>;
 }
 
 function NotFound() {
