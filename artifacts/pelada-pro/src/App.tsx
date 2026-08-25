@@ -146,8 +146,25 @@ function PlayersPage({ players, setPlayers, teams }: { players: Player[]; setPla
   return <div className="animate-rise"><PageHeading eyebrow={`${players.length} cadastrados · ${players.filter((p) => p.present).length} presentes`} title="Jogadores" description="O elenco da rodada, com presença e avaliação para o sorteio nunca ficar injusto." action={<Button icon={Plus} onClick={() => setModal('new')} testId="button-new-player">Novo jogador</Button>} /><div className="mb-4 flex flex-col gap-3 sm:flex-row"><label className="relative flex-1"><Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground pointer-events-none" /><input data-testid="input-search-players" value={search} onChange={(e) => setSearch(e.target.value)} className="field-input pl-3 pr-9" placeholder="Buscar por nome ou apelido..." /></label><div className="flex items-center gap-2 rounded-xl border bg-card px-3 text-xs font-bold text-muted-foreground"><UserCheck className="size-4 text-[#56845d]" /> Presença atualizada na hora</div></div><div className="overflow-hidden rounded-2xl border bg-card">{filtered.length ? <div className="divide-y">{filtered.map((player) => <div key={player.id} data-testid={`row-player-${player.id}`} className="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-6"><span className={`grid size-11 shrink-0 place-items-center rounded-full font-display text-lg font-bold ${player.present ? 'bg-[#d9f3a1] text-[#456b31]' : 'bg-muted text-muted-foreground'}`}>{initials(player.name)}</span><div className="min-w-[150px] flex-1"><p className="font-bold">{player.nickname || player.name}</p><p className="text-xs text-muted-foreground">{player.name} · {player.position}</p></div><span className="hidden rounded-full bg-muted px-2.5 py-1 text-[10px] font-black uppercase text-muted-foreground sm:inline-flex">{player.position}</span><div className="hidden gap-3 md:flex">{ratingKeys.map((key) => <div key={key} className="text-center"><p className="text-[9px] font-black uppercase text-muted-foreground">{ratingLabels[key]}</p><Stars value={player.ratings[key]} /></div>)}</div><button data-testid={`button-presence-${player.id}`} onClick={() => setPlayers((old) => old.map((item) => item.id === player.id ? { ...item, present: !item.present } : item))} className={`rounded-full px-3 py-1.5 text-[10px] font-black uppercase transition-colors ${player.present ? 'bg-[#e3f4bb] text-[#47764e]' : 'bg-muted text-muted-foreground'}`}>{player.present ? 'Presente' : 'Marcar presença'}</button><div className="flex gap-1 border-l pl-2"><button data-testid={`button-edit-player-${player.id}`} onClick={() => setModal(player)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"><Pencil className="size-4" /></button><button data-testid={`button-delete-player-${player.id}`} onClick={() => setRemove(player)} className="rounded-lg p-2 text-muted-foreground hover:bg-[#fce0db] hover:text-destructive"><Trash2 className="size-4" /></button></div></div>)}</div> : <EmptyState icon={Users} title="Nenhum jogador por aqui" text={search ? 'Tente outro nome ou cadastre um novo jogador.' : 'Cadastre o primeiro jogador da sua pelada.'} action={!search ? <Button icon={Plus} onClick={() => setModal('new')}>Adicionar jogador</Button> : undefined} />}</div>{modal && <PlayerForm player={modal === 'new' ? undefined : modal} teams={teams} onClose={() => setModal(null)} onSave={(value) => setPlayers((old) => old.some((item) => item.id === value.id) ? old.map((item) => item.id === value.id ? value : item) : [...old, value])} />}{remove && <Confirm title="Excluir jogador?" text={`${remove.nickname || remove.name} será removido do elenco. O histórico de partidas continua intacto.`} onClose={() => setRemove(null)} onConfirm={() => { setPlayers((old) => old.filter((item) => item.id !== remove.id)); setRemove(null); }} />}</div>;
 }
 
+const extractBaseName = (fullName: string) => {
+  let name = fullName;
+  // Remove qualquer cor conhecida do final (repetidamente pra limpar concatenações)
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const colorName of Object.values(COLOR_NAMES)) {
+      if (name.endsWith(' ' + colorName)) {
+        name = name.slice(0, -(colorName.length + 1));
+        changed = true;
+        break;
+      }
+    }
+  }
+  return name || 'Time';
+};
+
 function TeamForm({ team, players, activeRodadaId, onSave, onClose }: { team?: Team; players?: Player[]; activeRodadaId?: string; onSave: (team: Team) => void; onClose: () => void }) {
-  const [name, setName] = useState(team?.name ? team.name.split(' ').slice(0, -1).join(' ') : ''); 
+  const [name, setName] = useState(team?.name ? extractBaseName(team.name) : ''); 
   const [color, setColor] = useState(team?.color ?? COLORS[0]); 
   const [playerIds, setPlayerIds] = useState(team?.playerIds ?? []);
   
@@ -270,6 +287,18 @@ function AppContent() {
   const [matches, setMatches] = useStored<Match[]>('pelada-pro-matches', seedMatches);
   const [rodadas, setRodadas] = useStored<Rodada[]>('pelada-pro-rodadas', seedRodadas);
   const [activeRodadaId, setActiveRodadaId] = useStored<string>('pelada-pro-active-rodada', seedRodadas[0]?.id ?? '');
+  
+  // Limpar times com cores inválidas ou nomes concatenados
+  useEffect(() => {
+    const validTeams = teams.filter(t => COLORS.includes(t.color));
+    const cleanedTeams = validTeams.map(t => ({
+      ...t,
+      name: extractBaseName(t.name) + ' ' + COLOR_NAMES[t.color]
+    }));
+    if (cleanedTeams.length !== teams.length || JSON.stringify(cleanedTeams) !== JSON.stringify(teams)) {
+      setTeams(cleanedTeams);
+    }
+  }, []);
   
   const activeRodada = rodadas.find((r) => r.id === activeRodadaId);
   const activeTeams = teams.filter((t) => t.rodadaId === activeRodadaId);
