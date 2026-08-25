@@ -14,7 +14,7 @@ type Match = { id: string; date: string; teamA: string; teamB: string; scoreA: n
 type RepeatType = 'never' | 'weekly' | 'biweekly' | 'monthly';
 type Rodada = { id: string; date: string; time: string; location: string; description?: string; repeatType?: RepeatType; repeatUntil?: string; createdAt: string; };
 
-const COLORS = ['#ef6b59', '#f2bd45', '#5d8f68', '#7a78bc', '#42a6a0'];
+const COLORS = ['#ef6b59', '#f2bd45', '#5d8f68', '#7a78bc', '#42a6a0', '#3b82f6', '#fbbf24', '#f97316', '#1f2937', '#f5f5f5'];
 const positions: Position[] = ['Goleiro', 'Defesa', 'Meio', 'Ataque'];
 const ratingKeys: (keyof Ratings)[] = ['goleiro', 'defesa', 'meio', 'ataque'];
 const ratingLabels: Record<keyof Ratings, string> = { goleiro: 'Gol', defesa: 'Def', meio: 'Mei', ataque: 'Ata' };
@@ -242,12 +242,18 @@ function RodasPage({ rodadas, setRodadas, activeRodadaId, setActiveRodadaId }: {
 }
 
 function RodadaForm({ initialData, onClose, onSave }: { initialData?: Rodada | null; onClose: () => void; onSave: (rodada: Omit<Rodada, 'id' | 'createdAt'>) => void }) {
-  const [date, setDate] = useState(initialData?.date ? initialData.date.split('T')[0] : new Date(Date.now() + 86400000).toISOString().split('T')[0]);
+  const formatDateForInput = (dateStr?: string) => {
+    if (!dateStr) return new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    // Garante que temos apenas YYYY-MM-DD
+    return dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+  };
+  
+  const [date, setDate] = useState(formatDateForInput(initialData?.date));
   const [time, setTime] = useState(initialData?.time ?? '20:00');
   const [location, setLocation] = useState(initialData?.location ?? '');
   const [description, setDescription] = useState(initialData?.description ?? '');
   const [repeatType, setRepeatType] = useState<RepeatType>(initialData?.repeatType ?? 'never');
-  const [repeatUntil, setRepeatUntil] = useState(initialData?.repeatUntil ? initialData.repeatUntil.split('T')[0] : '');
+  const [repeatUntil, setRepeatUntil] = useState(formatDateForInput(initialData?.repeatUntil));
 
   return <Modal title={initialData ? 'Editar rodada' : 'Nova rodada'} onClose={onClose}><form onSubmit={(e) => { e.preventDefault(); onSave({ date, time, location, description, repeatType: repeatType === 'never' ? undefined : repeatType, repeatUntil: repeatUntil || undefined }); }} className="space-y-4"><label><span className="field-label">Data</span><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="field-input" required /></label><label><span className="field-label">Horário</span><input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="field-input" required /></label><label><span className="field-label">Local</span><input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Ex: Quadra do Zé" className="field-input" required /></label><label><span className="field-label">Descrição (opcional)</span><input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex: Próxima rodada confirmada" className="field-input" /></label><label><span className="field-label">Repetir</span><select value={repeatType} onChange={(e) => setRepeatType(e.target.value as RepeatType)} className="field-input"><option value="never">Única (não repetir)</option><option value="weekly">Semanal</option><option value="biweekly">Quinzenal</option><option value="monthly">Mensal</option></select></label>{repeatType !== 'never' && <label><span className="field-label">Repetir até (opcional)</span><input type="date" value={repeatUntil} onChange={(e) => setRepeatUntil(e.target.value)} className="field-input" /></label>}<div className="flex justify-end gap-2 border-t pt-4"><Button variant="outline" onClick={onClose}>Cancelar</Button><Button type="submit" icon={Check}>{initialData ? 'Atualizar' : 'Criar'}</Button></div></form></Modal>;
 }
