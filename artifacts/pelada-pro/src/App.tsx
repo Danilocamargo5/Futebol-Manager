@@ -14,6 +14,9 @@ type Match = { id: string; date: string; teamA: string; teamB: string; scoreA: n
 type PlayerEvent = { id: string; playerId: string; type: 'gol' | 'assistencia' | 'defesa_dificil'; date: string; };
 type RepeatType = 'never' | 'weekly' | 'biweekly' | 'monthly';
 type Rodada = { id: string; date: string; time: string; location: string; description?: string; repeatType?: RepeatType; repeatUntil?: string; createdAt: string; };
+type UserRole = 'user' | 'admin' | 'organizador';
+type User = { id: string; username: string; password: string; role: UserRole; groupId: string; createdAt: string; };
+type AuthContextType = { user: User | null; login: (username: string, password: string) => boolean; logout: () => void; isAdmin: boolean; isOrganizador: boolean; };
 
 const COLORS = ['#5d8f68', '#3b82f6', '#fbbf24', '#f97316', '#1f2937', '#f5f5f5'];
 const COLOR_NAMES: Record<string, string> = { '#5d8f68': 'Verde', '#3b82f6': 'Azul', '#fbbf24': 'Amarelo', '#f97316': 'Laranja', '#1f2937': 'Preto', '#f5f5f5': 'Branco' };
@@ -22,6 +25,11 @@ const ratingKeys: (keyof Ratings)[] = ['goleiro', 'defesa', 'meio', 'ataque'];
 const ratingLabels: Record<keyof Ratings, string> = { goleiro: 'Gol', defesa: 'Def', meio: 'Mei', ataque: 'Ata' };
 const id = () => Math.random().toString(36).slice(2, 9);
 const seedPlayers: Player[] = [];
+const seedUsers: User[] = [
+  { id: 'u1', username: 'admin', password: 'admin123', role: 'admin', groupId: 'default', createdAt: new Date().toISOString() },
+  { id: 'u2', username: 'organizador', password: 'org123', role: 'organizador', groupId: 'default', createdAt: new Date().toISOString() },
+  { id: 'u3', username: 'jogador', password: 'jogador123', role: 'user', groupId: 'default', createdAt: new Date().toISOString() },
+];
 const seedRodadas: Rodada[] = [
   { id: 'r1', date: new Date(Date.now() + 86400000).toISOString().split('T')[0], time: '20:00', location: 'Quadra do Zé', description: 'Próxima rodada confirmada', repeatType: 'weekly', repeatUntil: new Date(Date.now() + 86400000 * 30).toISOString().split('T')[0], createdAt: new Date().toISOString() },
 ];
@@ -81,7 +89,7 @@ const navItems = [
   { href: '/rankings', label: 'Rankings', icon: Trophy },
 ];
 
-function Shell({ children, rodadas = [] }: { children: ReactNode; rodadas?: Rodada[] }) {
+function Shell({ children, rodadas = [], user, onLogout }: { children: ReactNode; rodadas?: Rodada[]; user: User; onLogout: () => void }) {
   const [location] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   
@@ -92,10 +100,20 @@ function Shell({ children, rodadas = [] }: { children: ReactNode; rodadas?: Roda
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[248px] flex-col bg-[#143b2a] px-5 py-7 text-[#f5f1e5] lg:flex">
       <Logo />
       <div className="mt-14"><p className="mb-4 px-3 text-[10px] font-bold uppercase tracking-[.2em] text-[#8eaa99]">Organização</p><nav className="space-y-1.5">{navItems.map(({ href, label, icon: Icon }) => <Link key={href} href={href} data-testid={`link-nav-${label.toLowerCase().replaceAll(' ', '-')}`} className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${location === href ? 'bg-[#c8f169] text-[#143b2a]' : 'text-[#b7cabb] hover:bg-[#204f38] hover:text-[#f5f1e5]'}`}><Icon className="size-[18px]" strokeWidth={location === href ? 2.5 : 1.8} /><span>{label}</span>{location === href && <ArrowRight className="ml-auto size-4" />}</Link>)}</nav></div>
-      <div className="mt-auto rounded-2xl border border-[#3d674d] bg-[#1c4933] p-4">{nextRodada ? <><p className="flex items-center gap-2 text-xs font-bold text-[#c8f169]"><Activity className="size-4" /> Próxima rodada</p><p className="mt-3 font-display text-2xl font-bold uppercase">{nextRodadaDayName} · {nextRodada.time}</p><p className="mt-1 text-xs text-[#a7c0ad]">{nextRodada.location}</p><Link href="/sorteio" data-testid="link-sidebar-draw" className="mt-4 flex items-center justify-between rounded-lg bg-[#c8f169] px-3 py-2 text-xs font-black uppercase text-[#143b2a]">Montar times <ArrowRight className="size-3.5" /></Link></> : <><p className="flex items-center gap-2 text-xs font-bold text-[#a7c0ad]"><Activity className="size-4" /> Nenhuma rodada</p><p className="mt-3 text-xs text-[#a7c0ad]">Crie uma rodada pra começar</p><Link href="/rodadas" data-testid="link-sidebar-rodadas" className="mt-4 flex items-center justify-between rounded-lg bg-[#c8f169] px-3 py-2 text-xs font-black uppercase text-[#143b2a]">Criar rodada <ArrowRight className="size-3.5" /></Link></> }</div>
+      <div className="mt-auto space-y-3">
+        <div className="rounded-lg bg-[#1c4933] p-3 text-xs">
+          <p className="text-[#a7c0ad] mb-1">👤 Logado como:</p>
+          <p className="font-bold text-[#c8f169] capitalize">{user.username}</p>
+          <p className="text-[#a7c0ad] text-[10px] mt-1">🎭 {user.role === 'admin' ? 'Administrador' : user.role === 'organizador' ? 'Organizador' : 'Usuário'}</p>
+        </div>
+        <button onClick={onLogout} className="w-full rounded-lg bg-destructive/20 py-2 text-xs font-bold text-destructive hover:bg-destructive/30">
+          🚪 Sair
+        </button>
+      </div>
+      <div className="mt-3 rounded-2xl border border-[#3d674d] bg-[#1c4933] p-4">{nextRodada ? <><p className="flex items-center gap-2 text-xs font-bold text-[#c8f169]"><Activity className="size-4" /> Próxima rodada</p><p className="mt-3 font-display text-2xl font-bold uppercase">{nextRodadaDayName} · {nextRodada.time}</p><p className="mt-1 text-xs text-[#a7c0ad]">{nextRodada.location}</p><Link href="/sorteio" data-testid="link-sidebar-draw" className="mt-4 flex items-center justify-between rounded-lg bg-[#c8f169] px-3 py-2 text-xs font-black uppercase text-[#143b2a]">Montar times <ArrowRight className="size-3.5" /></Link></> : <><p className="flex items-center gap-2 text-xs font-bold text-[#a7c0ad]"><Activity className="size-4" /> Nenhuma rodada</p><p className="mt-3 text-xs text-[#a7c0ad]">Crie uma rodada pra começar</p><Link href="/rodadas" data-testid="link-sidebar-rodadas" className="mt-4 flex items-center justify-between rounded-lg bg-[#c8f169] px-3 py-2 text-xs font-black uppercase text-[#143b2a]">Criar rodada <ArrowRight className="size-3.5" /></Link></> }</div>
     </aside>
-    <header className="sticky top-0 z-30 flex h-[74px] items-center justify-between border-b bg-background/90 px-5 backdrop-blur lg:hidden"><button data-testid="button-open-menu" onClick={() => setMenuOpen(true)} className="rounded-lg p-2 hover:bg-muted"><Menu className="size-5" /></button><Logo /><span className="size-9" /></header>
-    {menuOpen && <div className="fixed inset-0 z-50 bg-[#102d22]/50 backdrop-blur-sm lg:hidden" onClick={() => setMenuOpen(false)}><aside className="h-full w-[280px] bg-[#143b2a] p-6 text-[#f5f1e5]" onClick={(event) => event.stopPropagation()}><div className="flex items-center justify-between"><Logo /><button data-testid="button-close-menu" onClick={() => setMenuOpen(false)} className="text-[#c8f169]"><X /></button></div><nav className="mt-12 space-y-1.5">{navItems.map(({ href, label, icon: Icon }) => <Link onClick={() => setMenuOpen(false)} key={href} href={href} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold ${location === href ? 'bg-[#c8f169] text-[#143b2a]' : 'text-[#b7cabb]'}`}><Icon className="size-[18px]" />{label}</Link>)}</nav></aside></div>}
+    <header className="sticky top-0 z-30 flex h-[74px] items-center justify-between border-b bg-background/90 px-5 backdrop-blur lg:hidden"><button data-testid="button-open-menu" onClick={() => setMenuOpen(true)} className="rounded-lg p-2 hover:bg-muted"><Menu className="size-5" /></button><Logo /><button onClick={onLogout} className="rounded-lg p-2 text-muted-foreground hover:text-foreground text-sm">🚪</button></header>
+    {menuOpen && <div className="fixed inset-0 z-50 bg-[#102d22]/50 backdrop-blur-sm lg:hidden" onClick={() => setMenuOpen(false)}><aside className="h-full w-[280px] bg-[#143b2a] p-6 text-[#f5f1e5]" onClick={(event) => event.stopPropagation()}><div className="flex items-center justify-between"><Logo /><button data-testid="button-close-menu" onClick={() => setMenuOpen(false)} className="text-[#c8f169]"><X /></button></div><nav className="mt-12 space-y-1.5">{navItems.map(({ href, label, icon: Icon }) => <Link onClick={() => setMenuOpen(false)} key={href} href={href} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold ${location === href ? 'bg-[#c8f169] text-[#143b2a]' : 'text-[#b7cabb]'}`}><Icon className="size-[18px]" />{label}</Link>)}</nav><button onClick={() => { onLogout(); setMenuOpen(false); }} className="mt-8 w-full rounded-lg bg-destructive/20 py-2 text-xs font-bold text-destructive hover:bg-destructive/30">🚪 Sair</button></aside></div>}
     <main className="pb-24 lg:ml-[248px] lg:pb-8"><div className="mx-auto max-w-[1440px] px-5 py-7 sm:px-8 lg:px-12 lg:py-10">{children}</div></main>
     <nav className="fixed inset-x-0 bottom-0 z-30 flex h-[68px] items-center justify-around border-t bg-card/95 px-2 backdrop-blur lg:hidden">{navItems.map(({ href, label, icon: Icon }) => <Link key={href} href={href} data-testid={`link-mobile-nav-${label}`} className={`flex min-w-0 flex-col items-center gap-1 px-2 py-2 text-[10px] font-bold ${location === href ? 'text-primary' : 'text-muted-foreground'}`}><Icon className="size-[19px]" /><span className="truncate">{label.split(' ')[0]}</span></Link>)}</nav>
   </div>;
@@ -436,7 +454,116 @@ function RodadaForm({ initialData, onClose, onSave }: { initialData?: Rodada | n
   return <Modal title={initialData ? 'Editar rodada' : 'Nova rodada'} onClose={onClose}><form onSubmit={(e) => { e.preventDefault(); onSave({ date, time, location, description, repeatType: repeatType === 'never' ? undefined : repeatType, repeatUntil: repeatUntil || undefined }); }} className="space-y-4"><label><span className="field-label">Data</span><input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="field-input" required /></label><label><span className="field-label">Horário</span><input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="field-input" required /></label><label><span className="field-label">Local</span><input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Ex: Quadra do Zé" className="field-input" required /></label><label><span className="field-label">Descrição (opcional)</span><input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex: Próxima rodada confirmada" className="field-input" /></label><label><span className="field-label">Repetir</span><select value={repeatType} onChange={(e) => setRepeatType(e.target.value as RepeatType)} className="field-input"><option value="never">Única (não repetir)</option><option value="weekly">Semanal</option><option value="biweekly">Quinzenal</option><option value="monthly">Mensal</option></select></label>{repeatType !== 'never' && <label><span className="field-label">Repetir até (opcional)</span><input type="date" value={repeatUntil} onChange={(e) => setRepeatUntil(e.target.value)} className="field-input" /></label>}<div className="flex justify-end gap-2 border-t pt-4"><Button variant="outline" onClick={onClose}>Cancelar</Button><Button type="submit" icon={Check}>{initialData ? 'Atualizar' : 'Criar'}</Button></div></form></Modal>;
 }
 
-function AppContent() {
+function LoginPage({ onLogin }: { onLogin: (user: User) => void }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const user = seedUsers.find(u => u.username === username && u.password === password);
+    if (user) {
+      onLogin(user);
+      setError('');
+    } else {
+      setError('Usuário ou senha incorretos');
+    }
+  };
+  
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#1a2e1a]">
+      <div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-lg">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-[#a8d46a]">
+            <span className="text-2xl font-black">⚽</span>
+          </div>
+          <h1 className="font-display text-3xl font-black uppercase">Pelada Pro</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Organiza a rodada</p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <label>
+            <span className="field-label">Usuário</span>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Ex: admin, organizador, jogador"
+              className="field-input"
+              required
+            />
+          </label>
+          
+          <label>
+            <span className="field-label">Senha</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="field-input"
+              required
+            />
+          </label>
+          
+          {error && <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+          
+          <button
+            type="submit"
+            className="w-full rounded-xl bg-primary py-2.5 font-bold text-primary-foreground hover:brightness-110"
+          >
+            Entrar
+          </button>
+        </form>
+        
+        <div className="mt-6 rounded-lg bg-muted/30 p-4">
+          <p className="text-[10px] font-bold uppercase text-muted-foreground mb-3">Contas de Teste:</p>
+          <div className="space-y-1 text-xs">
+            <p>👤 <strong>admin</strong> / admin123 (Administrador)</p>
+            <p>📋 <strong>organizador</strong> / org123 (Organizador)</p>
+            <p>🎮 <strong>jogador</strong> / jogador123 (Usuário comum)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [user, setUser] = useStored<User | null>('pelada-pro-user', null);
+  
+  const handleLogin = (userData: User) => {
+    setUser(userData);
+  };
+  
+  const handleLogout = () => {
+    setUser(null);
+  };
+  
+  if (!user) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
+  
+  return <AppContentWithUser user={user} onLogout={handleLogout} />;
+}
+
+function ProtectedRoute({ component: Component, user, requiredRole }: { component: React.ComponentType<any>; user: User; requiredRole?: UserRole[] }) {
+  if (!requiredRole) return <Component />;
+  
+  if (requiredRole.includes(user.role)) {
+    return <Component />;
+  }
+  
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="text-center">
+        <h1 className="mb-4 text-3xl font-bold">🔒 Acesso Negado</h1>
+        <p className="mb-6 text-muted-foreground">Você não tem permissão para acessar esta página.</p>
+        <p className="text-sm text-muted-foreground mb-4">Necessário: {requiredRole.map(r => r === 'admin' ? 'Administrador' : r === 'organizador' ? 'Organizador' : 'Usuário').join(' ou ')}</p>
+        <Link href="/" className="inline-block rounded-lg bg-primary px-4 py-2 font-bold text-primary-foreground hover:brightness-110">Voltar ao Dashboard</Link>
+      </div>
+    </div>
+  );
+}
   const [players, setPlayers] = useStored<Player[]>('pelada-pro-players', seedPlayers);
   const [teams, setTeams] = useStored<Team[]>('pelada-pro-teams', []);
   const [matches, setMatches] = useStored<Match[]>('pelada-pro-matches', seedMatches);
@@ -468,13 +595,13 @@ function AppContent() {
   const activeRodada = rodadas.find((r) => r.id === activeRodadaId);
   const activeTeams = teams.filter((t) => t.rodadaId === activeRodadaId);
   
-  return <Shell rodadas={rodadas}><Switch><Route path="/" component={() => <Dashboard players={players} teams={activeTeams} matches={matches} playerEvents={playerEvents} setPlayers={setPlayers} rodada={activeRodada} setActiveRodadaId={setActiveRodadaId} rodadas={rodadas} />} /><Route path="/rodadas" component={() => <RodasPage rodadas={rodadas} setRodadas={setRodadas} activeRodadaId={activeRodadaId} setActiveRodadaId={setActiveRodadaId} />} /><Route path="/jogadores" component={() => <PlayersPage players={players} setPlayers={setPlayers} />} /><Route path="/times" component={() => <TeamsPage teams={activeTeams} players={players} setTeams={setTeams} activeRodadaId={activeRodadaId} />} /><Route path="/sorteio" component={() => <DrawPage players={players} teams={activeTeams} setTeams={setTeams} setMatches={setMatches} activeRodadaId={activeRodadaId} />} /><Route path="/live-scoring" component={() => <LiveScoringPage players={players} playerEvents={playerEvents} setPlayerEvents={setPlayerEvents} />} /><Route path="/rankings" component={() => <RankingsPage players={players} playerEvents={playerEvents} />} /><Route><NotFound /></Route></Switch></Shell>;
+  return <Shell user={user} onLogout={onLogout} rodadas={rodadas}><Switch><Route path="/" component={() => <Dashboard players={players} teams={activeTeams} matches={matches} playerEvents={playerEvents} setPlayers={setPlayers} rodada={activeRodada} setActiveRodadaId={setActiveRodadaId} rodadas={rodadas} />} /><Route path="/rodadas" component={() => <ProtectedRoute user={user} requiredRole={['admin', 'organizador']} component={() => <RodasPage rodadas={rodadas} setRodadas={setRodadas} activeRodadaId={activeRodadaId} setActiveRodadaId={setActiveRodadaId} />} />} /><Route path="/jogadores" component={() => <ProtectedRoute user={user} requiredRole={['admin']} component={() => <PlayersPage players={players} setPlayers={setPlayers} />} />} /><Route path="/times" component={() => <ProtectedRoute user={user} requiredRole={['admin', 'organizador']} component={() => <TeamsPage teams={activeTeams} players={players} setTeams={setTeams} activeRodadaId={activeRodadaId} />} />} /><Route path="/sorteio" component={() => <ProtectedRoute user={user} requiredRole={['admin', 'organizador']} component={() => <DrawPage players={players} teams={activeTeams} setTeams={setTeams} setMatches={setMatches} activeRodadaId={activeRodadaId} />} />} /><Route path="/live-scoring" component={() => <ProtectedRoute user={user} requiredRole={['admin', 'organizador']} component={() => <LiveScoringPage players={players} playerEvents={playerEvents} setPlayerEvents={setPlayerEvents} />} />} /><Route path="/rankings" component={() => <RankingsPage players={players} playerEvents={playerEvents} />} /><Route><NotFound /></Route></Switch></Shell>;
 }
 
 function NotFound() {
   return <div className="flex min-h-[70dvh] flex-col items-center justify-center text-center"><span className="font-display text-8xl font-black text-[#f97316]">404</span><h1 className="font-display text-3xl font-black uppercase">Essa bola saiu</h1><p className="mt-2 text-sm text-muted-foreground">A página que você procura não está na súmula.</p><Link href="/" data-testid="link-back-home" className="mt-5 inline-flex rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-[3px_3px_0_#c8f169]">Voltar para a visão geral</Link></div>;
 }
 
-export default function App() {
-  return <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><AppContent /></WouterRouter>;
+export default function RootApp() {
+  return <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><App /></WouterRouter>;
 }
