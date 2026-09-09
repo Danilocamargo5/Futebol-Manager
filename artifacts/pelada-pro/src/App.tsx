@@ -564,6 +564,8 @@ function ProtectedRoute({ component: Component, user, requiredRole }: { componen
     </div>
   );
 }
+
+function AppContentWithUser({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [players, setPlayers] = useStored<Player[]>('pelada-pro-players', seedPlayers);
   const [teams, setTeams] = useStored<Team[]>('pelada-pro-teams', []);
   const [matches, setMatches] = useStored<Match[]>('pelada-pro-matches', seedMatches);
