@@ -1,8 +1,5 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
+import 'data/app_snapshot_store.dart';
 import 'models.dart';
 
 class DrawResult {
@@ -22,9 +19,7 @@ class DrawResult {
 }
 
 class AppState extends ChangeNotifier {
-  static const _teamsKey = 'pelada_pro_teams';
-  static const _playersKey = 'pelada_pro_players';
-  static const _matchesKey = 'pelada_pro_matches';
+  final AppSnapshotStore _snapshotStore = AppSnapshotStore();
 
   List<Team> teams = [];
   List<Player> players = [];
@@ -32,26 +27,20 @@ class AppState extends ChangeNotifier {
   bool isReady = false;
 
   Future<void> load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final teamsJson = prefs.getString(_teamsKey);
-    final playersJson = prefs.getString(_playersKey);
-    final matchesJson = prefs.getString(_matchesKey);
-
-    if (teamsJson == null || playersJson == null) {
+    final snapshot = await _snapshotStore.read();
+    if (snapshot == null) {
       _seedDemoData();
       await _persist();
     } else {
-      teams = (jsonDecode(teamsJson) as List)
+      teams = snapshot['teams']!
           .map((item) => Team.fromJson(item as Map<String, dynamic>))
           .toList();
-      players = (jsonDecode(playersJson) as List)
+      players = snapshot['players']!
           .map((item) => Player.fromJson(item as Map<String, dynamic>))
           .toList();
-      if (matchesJson != null) {
-        matches = (jsonDecode(matchesJson) as List)
-            .map((item) => MatchRecord.fromJson(item as Map<String, dynamic>))
-            .toList();
-      }
+      matches = snapshot['matches']!
+          .map((item) => MatchRecord.fromJson(item as Map<String, dynamic>))
+          .toList();
     }
     isReady = true;
     notifyListeners();
@@ -90,21 +79,11 @@ class AppState extends ChangeNotifier {
     );
   }
 
-  Future<void> _persist() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _teamsKey,
-      jsonEncode(teams.map((team) => team.toJson()).toList()),
-    );
-    await prefs.setString(
-      _playersKey,
-      jsonEncode(players.map((player) => player.toJson()).toList()),
-    );
-    await prefs.setString(
-      _matchesKey,
-      jsonEncode(matches.map((match) => match.toJson()).toList()),
-    );
-  }
+  Future<void> _persist() => _snapshotStore.write(
+        teams: teams.map((team) => team.toJson()).toList(),
+        players: players.map((player) => player.toJson()).toList(),
+        matches: matches.map((match) => match.toJson()).toList(),
+      );
 
   String _id(String prefix) => '$prefix-${DateTime.now().microsecondsSinceEpoch}';
 
