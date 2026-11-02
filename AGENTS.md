@@ -19,6 +19,22 @@ Este arquivo estabelece regras de trabalho no repositório. Consulte também [do
 - Se houver decisões de produto, integrações externas, custos, infraestrutura, privacidade ou mudanças destrutivas, propor e aguardar aprovação.
 - Preservar funcionalidades existentes; não introduzir dependências externas sem justificativa e aprovação.
 
+## Prioridade mobile e arquitetura alvo
+
+- Priorizar inicialmente FM-011 a FM-015 de `docs/BACKLOG.md`, preservando correções bloqueantes de segurança e qualidade.
+- Flutter em `flutter_app` é o aplicativo mobile principal para Android e iOS; usar base de código compartilhada e diferenças por plataforma somente quando necessárias.
+- React será o painel web administrativo e a API será compartilhada. **Não** assumir que a integração já está implementada; mapear antes de mudar.
+- Não criar dois aplicativos nativos independentes, reescrever o app ou alterar arquitetura de persistência sem proposta aprovada.
+
+## Desenvolvimento local-first e custos
+
+- **Proibido criar, modificar ou provisionar recursos AWS**, executar Terraform apply, deploy, serviços pagos ou publicar nas lojas sem autorização humana explícita.
+- Priorizar testes automatizados e ambiente local com mocks, fixtures, emuladores e serviços locais quando disponíveis.
+- Flutter: verificar SDK, depois `cd flutter_app && flutter pub get && flutter analyze && flutter test`. Não alegar testes executados se SDK ausente.
+- Android: build/emulador só com SDK configurado. iOS: build e simulador exigem macOS com Xcode; se indisponíveis, registrar limitação.
+- Para testes de integração, documentar o que foi real versus simulado. Nunca usar credenciais de produção.
+- Antes de propor AWS, apresentar arquitetura, estimativa de custos, limites de orçamento, desligamento e alternativas locais para aprovação.
+
 ## Qualidade e validação
 
 - Manter o stack e os padrões existentes (workspace pnpm, API TypeScript/Express, frontend React; Flutter opcional conforme escopo).
