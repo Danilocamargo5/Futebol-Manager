@@ -18,6 +18,18 @@
 - **BLOCKED**: decisão ou dependência pendente.
 - **DONE**: implementado, validado e integrado em develop.
 
+## P0 — Estratégia mobile e validação local (prioridade imediata)
+
+| ID | Entrega | Estado inicial | Critérios de aceite |
+| --- | --- | --- | --- |
+| FM-011 | Auditoria do Flutter atual | A VALIDAR | Inspecionar `flutter_app`, mapear telas e funcionalidades reais, dependências, persistência e lacunas; rodar `flutter pub get`, `flutter analyze` e `flutter test` se houver SDK disponível; reportar impedimentos. |
+| FM-012 | Preparar e testar Android localmente | A VALIDAR | Verificar pastas nativas, executar testes e build Android quando SDKs estiverem disponíveis; sem publicação em loja. |
+| FM-013 | Preparar e testar iOS localmente | A VALIDAR | Verificar estrutura iOS; em macOS com Xcode disponível, validar build/simulador; em ambiente Linux, registrar limitação e não alegar build iOS. |
+| FM-014 | Definir integração Flutter ↔ API compartilhada | BLOCKED | Mapear contratos e dados existentes; propor arquitetura, autenticação e sincronização antes de implementar mudanças estruturais. |
+| FM-015 | Estratégia de testes locais e integração sem nuvem | TODO | Documentar comandos reproduzíveis para API, web e Flutter, testes automatizados e banco local quando necessário; nenhum recurso AWS criado. |
+
+**Direção do produto:** Flutter será o aplicativo principal Android/iOS; React será o painel web administrativo; a API será compartilhada. Essa direção não autoriza reescrever funcionalidades existentes nem criar infraestrutura sem aprovação.
+
 ## P0 — MVP essencial
 
 | ID | Entrega | Estado inicial | Critérios de aceite |
@@ -42,6 +54,16 @@
 | FM-008 | Estatísticas de jogos e jogadores | A VALIDAR | Registrar resultados, gols e assistências com regras consistentes. |
 | FM-009 | Notificações e lembretes | BLOCKED | Definir canal, consentimento, frequência e custos antes de integrar serviços. |
 | FM-010 | Painel administrativo | A VALIDAR | Visão de partidas, jogadores e confirmações com permissões adequadas. |
+
+## Política local-first e controle de custos
+
+1. **Validar localmente antes de qualquer cloud:** lint/analyze, typecheck, testes unitários, integração, builds e smoke tests quando ferramentas estiverem disponíveis.
+2. **Backend/web:** usar os scripts reais do monorepo (`pnpm run typecheck`, `pnpm run build` e testes dos pacotes pertinentes). Registrar comandos, resultados e limitações.
+3. **Flutter:** dentro de `flutter_app`, preferir `flutter pub get`, `flutter analyze`, `flutter test`. Executar build Android somente com SDK Android; build iOS/simulador somente em macOS com Xcode configurado.
+4. **Serviços e dados:** preferir mocks, fixtures, serviços locais e banco local/contêiner quando necessário; não presumir que há Docker ou banco configurado. Não substituir testes de integração por mocks sem explicar cobertura.
+5. **Sem custos:** proibir provisionamento AWS, deploy, serviços pagos, recursos de terceiros e publicação nas lojas sem aprovação explícita. Evitar qualquer dependência de credenciais reais.
+6. **Critério de PR:** evidenciar validações realizadas; se ambiente impedir verificações essenciais, deixar PR em draft e declarar o que falta. Nunca afirmar que Android/iOS foram testados sem executar.
+7. **Futuro AWS:** somente após MVP e testes locais suficientes, preparar proposta de arquitetura, custos estimados, limites, observabilidade e estratégia de desligamento para aprovação humana.
 
 ## Qualidade transversal
 
