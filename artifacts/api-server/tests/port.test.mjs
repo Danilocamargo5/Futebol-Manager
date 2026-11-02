@@ -11,15 +11,29 @@ const { parsePort } = await import(
   `data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`
 );
 
-test("accepts valid TCP ports", () => {
-  assert.equal(parsePort("1"), 1);
-  assert.equal(parsePort("3000"), 3000);
-  assert.equal(parsePort("65535"), 65535);
-});
+for (const [value, expected] of [["1", 1], ["3000", 3000], ["65535", 65535]]) {
+  test(`accepts TCP port ${value}`, () => {
+    assert.equal(parsePort(value), expected);
+  });
+}
 
-test("rejects missing and invalid TCP ports", () => {
-  assert.throws(() => parsePort(undefined), /PORT environment variable is required/);
-  for (const value of ["", "0", "-1", "1.5", "65536", "Infinity", "NaN", "abc"]) {
-    assert.throws(() => parsePort(value), /PORT|Invalid PORT value/);
-  }
-});
+for (const value of [undefined, ""]) {
+  test(`reports missing PORT for ${JSON.stringify(value)}`, () => {
+    assert.throws(() => parsePort(value), {
+      name: "Error",
+      message: "PORT environment variable is required but was not provided.",
+    });
+  });
+}
+
+for (const value of [
+  "0", "-1", "1.5", "65534.5", "65535.5", "65536", "99999999999999999999",
+  "Infinity", "-Infinity", "1e309", "NaN", "abc", "3000abc", " ", "\t\n",
+]) {
+  test(`rejects invalid TCP port ${JSON.stringify(value)}`, () => {
+    assert.throws(() => parsePort(value), {
+      name: "Error",
+      message: `Invalid PORT value: "${value}"`,
+    });
+  });
+}
