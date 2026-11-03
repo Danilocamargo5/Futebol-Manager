@@ -22,7 +22,7 @@
 
 | ID | Entrega | Estado inicial | Critérios de aceite |
 | --- | --- | --- | --- |
-| FM-011 | Auditoria do Flutter atual | A VALIDAR | Inspecionar `flutter_app`, mapear telas e funcionalidades reais, dependências, persistência e lacunas; rodar `flutter pub get`, `flutter analyze` e `flutter test` se houver SDK disponível; reportar impedimentos. |
+| FM-011 | Auditoria do Flutter atual | IN PROGRESS ([PR #30](https://github.com/Danilocamargo5/Futebol-Manager/pull/30); validação Flutter pendente) | Inspecionar `flutter_app`, mapear telas e funcionalidades reais, dependências, persistência e lacunas; rodar `flutter pub get`, `flutter analyze` e `flutter test` se houver SDK disponível; reportar impedimentos. |
 | FM-012 | Preparar e testar Android localmente | A VALIDAR | Verificar pastas nativas, executar testes e build Android quando SDKs estiverem disponíveis; sem publicação em loja. |
 | FM-013 | Preparar e testar iOS localmente | A VALIDAR | Verificar estrutura iOS; em macOS com Xcode disponível, validar build/simulador; em ambiente Linux, registrar limitação e não alegar build iOS. |
 | FM-014 | Definir integração Flutter ↔ API compartilhada | BLOCKED | Mapear contratos e dados existentes; propor arquitetura, autenticação e sincronização antes de implementar mudanças estruturais. |
