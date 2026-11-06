@@ -26,7 +26,7 @@
 | FM-012 | Preparar e testar Android localmente | IN PROGRESS ([PR #31](https://github.com/Danilocamargo5/Futebol-Manager/pull/31); preparação documentada, SDK/build pendentes) | Verificar pastas nativas, executar testes e build Android quando SDKs estiverem disponíveis; sem publicação em loja. |
 | FM-013 | Preparar e testar iOS localmente | A VALIDAR | Verificar estrutura iOS; em macOS com Xcode disponível, validar build/simulador; em ambiente Linux, registrar limitação e não alegar build iOS. |
 | FM-014 | Definir integração Flutter ↔ API compartilhada | BLOCKED | Mapear contratos e dados existentes; propor arquitetura, autenticação e sincronização antes de implementar mudanças estruturais. |
-| FM-015 | Estratégia de testes locais e integração sem nuvem | IN PROGRESS ([PR a vincular após criação]; roteiro documental, execução pendente) | Documentar comandos reproduzíveis para API, web e Flutter, testes automatizados e banco local quando necessário; nenhum recurso AWS criado. |
+| FM-015 | Estratégia de testes locais e integração sem nuvem | IN PROGRESS ([PR #33](https://github.com/Danilocamargo5/Futebol-Manager/pull/33); roteiro documental, execução pendente) | Documentar comandos reproduzíveis para API, web e Flutter, testes automatizados e banco local quando necessário; nenhum recurso AWS criado. |
 
 **Direção do produto:** Flutter será o aplicativo principal Android/iOS; React será o painel web administrativo; a API será compartilhada. Essa direção não autoriza reescrever funcionalidades existentes nem criar infraestrutura sem aprovação.
 
