@@ -4,11 +4,11 @@ export function isDuplicatePlayerName(
   name: string,
   editingId?: string,
 ): boolean {
-  const normalized = name.trim().replace(/\s+/g, " ").toLocaleLowerCase("pt-BR");
+  const normalizeName = (value: string): string =>
+    value.normalize("NFC").trim().replace(/\s+/g, " ").toLocaleLowerCase("pt-BR");
+  const normalized = normalizeName(name);
   if (!normalized) return false;
   return players.some(
-    (player) =>
-      player.id !== editingId &&
-      player.name.trim().replace(/\s+/g, " ").toLocaleLowerCase("pt-BR") === normalized,
+    (player) => player.id !== editingId && normalizeName(player.name) === normalized,
   );
 }
