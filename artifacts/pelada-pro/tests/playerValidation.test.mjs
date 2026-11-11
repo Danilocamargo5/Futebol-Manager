@@ -35,3 +35,10 @@ test('does not mutate the player collection during validation', () => {
   assert.equal(isDuplicatePlayerName(existing, 'ANA MARIA'), true);
   assert.deepEqual(existing, [{ id: '4', name: 'Ana Maria' }]);
 });
+
+test('treats composed and decomposed Unicode accents as the same player name', () => {
+  const existing = [{ id: '5', name: 'José Araújo' }];
+  assert.equal(isDuplicatePlayerName(existing, 'Jose\u0301 Arau\u0301jo'), true);
+  assert.equal(isDuplicatePlayerName([{ id: '5', name: 'Jose\u0301 Arau\u0301jo' }], 'José Araújo'), true);
+  assert.equal(isDuplicatePlayerName(existing, 'Jose\u0301 Arau\u0301jo', '5'), false);
+});
