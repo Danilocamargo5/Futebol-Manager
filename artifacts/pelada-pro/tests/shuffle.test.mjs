@@ -24,3 +24,19 @@ test('rejects invalid RNG values', () => {
     assert.throws(() => shufflePlayers([1, 2], () => value), RangeError);
   }
 });
+
+test('all six permutations of three players are reachable with deterministic RNG', () => {
+  const permutations = new Set();
+  const choices = [0, 0.5, 0.999999];
+  for (const first of choices) {
+    for (const second of choices) {
+      const draws = [first, second];
+      let index = 0;
+      const result = shufflePlayers(['a', 'b', 'c'], () => draws[index++]);
+      assert.equal(index, 2, 'Fisher-Yates consumes exactly n - 1 draws');
+      assert.equal(new Set(result).size, 3, 'no player is duplicated');
+      permutations.add(result.join(','));
+    }
+  }
+  assert.equal(permutations.size, 6, 'all 3! possible orders are reachable');
+});
