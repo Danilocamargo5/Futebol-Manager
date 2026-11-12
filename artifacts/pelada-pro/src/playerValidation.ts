@@ -5,7 +5,10 @@ export function isDuplicatePlayerName(
   editingId?: string,
 ): boolean {
   const normalizeName = (value: string): string =>
-    value.normalize("NFC").trim().replace(/\s+/g, " ").toLocaleLowerCase("pt-BR");
+    value.normalize("NFC")
+      // Ignore invisible separators that can bypass duplicate-name checks.
+      .replace(/[\u200B\u2060\uFEFF]/g, "")
+      .trim().replace(/\s+/g, " ").toLocaleLowerCase("pt-BR");
   const normalized = normalizeName(name);
   if (!normalized) return false;
   return players.some(

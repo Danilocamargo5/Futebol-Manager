@@ -42,3 +42,13 @@ test('treats composed and decomposed Unicode accents as the same player name', (
   assert.equal(isDuplicatePlayerName([{ id: '5', name: 'Jose\u0301 Arau\u0301jo' }], 'José Araújo'), true);
   assert.equal(isDuplicatePlayerName(existing, 'Jose\u0301 Arau\u0301jo', '5'), false);
 });
+
+
+test('rejects visually duplicate names with invisible separator characters', () => {
+  for (const invisible of ['\\u200B', '\\u2060', '\\uFEFF']) {
+    assert.equal(isDuplicatePlayerName(players, `Rafa${invisible}el Santos`), true);
+    assert.equal(isDuplicatePlayerName([{ id: '3', name: `Rafa${invisible}el Santos` }], 'Rafael Santos'), true);
+  }
+  assert.equal(isDuplicatePlayerName(players, 'Rafa\\u200Bel Santos', '1'), false);
+  assert.equal(isDuplicatePlayerName(players, 'Rafa\\u200Bel Souza'), false);
+});
