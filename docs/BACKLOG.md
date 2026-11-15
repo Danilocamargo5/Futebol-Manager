@@ -35,7 +35,7 @@
 | ID | Entrega | Estado inicial | Critérios de aceite |
 | --- | --- | --- | --- |
 | FM-001 | Identificar fluxo atual e arquitetura de autenticação/administrador | A VALIDAR | Mapear login, papéis e persistência; propor lacunas sem introduzir provedor externo sem aprovação. |
-| FM-002 | Cadastro e gerenciamento de jogadores | IN PROGRESS (validação de nome no painel; branch `feature/fm-002-player-name-validation`) | Criar, listar, editar e desativar jogadores; validar campos e evitar duplicidade; testes aplicáveis. |
+| FM-002 | Cadastro e gerenciamento de jogadores | IN PROGRESS ([PR #41](https://github.com/Danilocamargo5/Futebol-Manager/pull/41); validação de nome no painel) | Criar, listar, editar e desativar jogadores; validar campos e evitar duplicidade; testes aplicáveis. |
 | FM-003 | Criação e gestão de partidas | A VALIDAR | Criar, editar e consultar partidas com data, horário, local e status; validar entradas. |
 | FM-004 | Confirmação de presença | A VALIDAR | Confirmar/recusar participação; impedir respostas duplicadas; exibir lista e estado atualizado. |
 
