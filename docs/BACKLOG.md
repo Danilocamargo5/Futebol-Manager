@@ -35,9 +35,17 @@
 | ID | Entrega | Estado inicial | Critérios de aceite |
 | --- | --- | --- | --- |
 | FM-001 | Identificar fluxo atual e arquitetura de autenticação/administrador | A VALIDAR | Mapear login, papéis e persistência; propor lacunas sem introduzir provedor externo sem aprovação. |
-| FM-002 | Cadastro e gerenciamento de jogadores | A VALIDAR | Criar, listar, editar e desativar jogadores; validar campos e evitar duplicidade; testes aplicáveis. |
+| FM-002 | Cadastro e gerenciamento de jogadores | IN PROGRESS ([PR #41](https://github.com/Danilocamargo5/Futebol-Manager/pull/41); validação de nome no painel) | Criar, listar, editar e desativar jogadores; validar campos e evitar duplicidade; testes aplicáveis. |
 | FM-003 | Criação e gestão de partidas | A VALIDAR | Criar, editar e consultar partidas com data, horário, local e status; validar entradas. |
 | FM-004 | Confirmação de presença | A VALIDAR | Confirmar/recusar participação; impedir respostas duplicadas; exibir lista e estado atualizado. |
+
+### FM-002 — inspeção e entrega de validação de nome no painel
+
+- **Já existe no React:** criação, listagem/busca por nome ou apelido, edição, ativação/desativação e persistência em localStorage. A prevenção de nomes duplicados já considera caixa, espaços, Unicode NFC, separadores invisíveis U+200B/U+2060/U+FEFF e o ID em edição; também considera jogadores inativos.
+- **Lacuna comprovada:** o formulário aceitava nomes compostos apenas por U+200B/U+2060, pois `trim()` não os remove; nomes só com espaços eram recusados sem mensagem. A entrega aplica a normalização já existente à obrigatoriedade do nome, informa o erro no campo e mantém o formulário aberto sem salvar dados inválidos, tanto ao criar quanto ao editar.
+- **Cobertura desta entrega:** regressões unitárias para obrigatoriedade e duplicidade, script de testes do painel e verificação em Chromium com dados sintéticos de criar/listar/editar/desativar/reativar, busca e recarga. Os testes do painel importam TypeScript e requerem Node com suporte a `--experimental-strip-types` (verificados com Node 24).
+- **Lacunas fora desta entrega:** o sorteio web ainda seleciona por presença sem excluir explicitamente inativos. No Flutter existem criar/listar/editar/remover e presença, mas não há campo de desativação no modelo nem prevenção de duplicidade em `addPlayer`/`updatePlayer`; o SDK não está disponível para validação mobile. A API atual expõe apenas saúde, sem CRUD de jogadores. Não inferir integração entre essas persistências nem marcar FM-002 como concluído.
+- **Limites:** nenhuma mudança de arquitetura, autenticação, formato de persistência ou dependências; registros antigos não são migrados. Um nome antigo inválido deve ser corrigido para salvar uma edição.
 
 ## P1 — Organização das peladas
 
